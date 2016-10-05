@@ -5,6 +5,10 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoModel", "DemoModel\DemoModel.csproj", "{97B2336D-ECD4-4879-A1D5-4C30FC0D9B8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParallelSerializer", "ParallelSerializer\ParallelSerializer.csproj", "{8844FC96-3035-45DA-BEA0-DA9881546EB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParallelSerializer.App", "ParallelSerializer.App\ParallelSerializer.App.csproj", "{8C40837C-ED97-4851-A5B2-7D12D61D4360}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{97B2336D-ECD4-4879-A1D5-4C30FC0D9B8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97B2336D-ECD4-4879-A1D5-4C30FC0D9B8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97B2336D-ECD4-4879-A1D5-4C30FC0D9B8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8844FC96-3035-45DA-BEA0-DA9881546EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8844FC96-3035-45DA-BEA0-DA9881546EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8844FC96-3035-45DA-BEA0-DA9881546EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8844FC96-3035-45DA-BEA0-DA9881546EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C40837C-ED97-4851-A5B2-7D12D61D4360}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C40837C-ED97-4851-A5B2-7D12D61D4360}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C40837C-ED97-4851-A5B2-7D12D61D4360}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C40837C-ED97-4851-A5B2-7D12D61D4360}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
