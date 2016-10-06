@@ -30,6 +30,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DynamicSerializer.Core">
+      <HintPath>..\..\Lajharmaki\DynamicSerializer\DynamicSerializer.Roslyn\bin\Debug\DynamicSerializer.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="DynamicSerializer.Roslyn">
+      <HintPath>..\..\Lajharmaki\DynamicSerializer\DynamicSerializer.Roslyn\bin\Debug\DynamicSerializer.Roslyn.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,8 +46,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CategorySerializationTask.cs" />
+    <Compile Include="IScheduler.cs" />
+    <Compile Include="ISerializationTask.cs" />
     <Compile Include="ParallelSerializer.cs" />
+    <Compile Include="ProductSerializationTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SerializationContext.cs" />
+    <Compile Include="SerializationResults.cs" />
+    <Compile Include="SerializationTask.cs" />
+    <Compile Include="TplScheduler.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DemoModel\DemoModel.csproj">

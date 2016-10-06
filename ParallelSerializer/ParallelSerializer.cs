@@ -1,17 +1,47 @@
 ﻿using DemoModel;
+using DynamicSerializer.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ParallelSerializer
 {
     public class ParallelSerializer
     {
-        public void Serialize(object obj, Stream output)
+        private readonly IScheduler scheduler;
+        
+        public ParallelSerializer(IScheduler scheduler)
         {
+            this.scheduler = scheduler;
+        }
+
+        public void Serialize(Product obj, Stream output)
+        {
+            using (var ms = new MemoryStream())
+            using (var bw = new SmartBinaryWriter(ms))
+            {
+                var context = new SerializationContext();
+                var task = new ProductSerializationTask(context, scheduler)
+                {
+                    Object = obj,
+                    Id = "1"
+                };
+                
+                scheduler.QueueWorkItem(task);
+                bw.Write(3);
+                bw.Write(typeof(Product).AssemblyQualifiedName);
+                bw.Write(typeof(Category).AssemblyQualifiedName);
+                bw.Write(typeof(List<Product>).AssemblyQualifiedName);
+
+                WaitHandle.WaitAll(scheduler.Handles.ToArray());
+                bw.Write(context.Results.GetJoinedResult());
+                ms.Position = 0;
+                ms.CopyTo(output);
+            }
         }
 
         public Product Deserialize(Stream input)
@@ -25,24 +55,6 @@ namespace ParallelSerializer
                 }
 
                 return null;
-            }
-        }
-
-        private void Serialize(Product product, Stream output)
-        {
-            using (var bw = new BinaryWriter(output))
-            {
-                if (product == null)
-                {
-                    bw.Write(-1);
-                    return;
-                }
-                bw.Write(15);
-                bw.Write((product.Category == null) ? -1 : 16);
-                if (product.Category != null)
-                {
-                    
-                }
             }
         }
     }
