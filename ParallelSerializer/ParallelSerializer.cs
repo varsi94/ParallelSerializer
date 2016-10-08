@@ -23,21 +23,25 @@ namespace ParallelSerializer
         {
             using (var ms = new MemoryStream())
             using (var bw = new SmartBinaryWriter(ms))
+            using (var barrier = new Barrier())
             {
-                var context = new SerializationContext();
+                var context = new SerializationContext()
+                {
+                    Barrier = barrier
+                };
                 var task = new ProductSerializationTask(context, scheduler)
                 {
                     Object = obj,
-                    Id = "1"
+                    Id = TaskId.CreateDefault()
                 };
-                
+
                 scheduler.QueueWorkItem(task);
                 bw.Write(3);
                 bw.Write(typeof(Product).AssemblyQualifiedName);
                 bw.Write(typeof(Category).AssemblyQualifiedName);
                 bw.Write(typeof(List<Product>).AssemblyQualifiedName);
 
-                WaitHandle.WaitAll(scheduler.Handles.ToArray());
+                barrier.WaitForAll();
                 bw.Write(context.Results.GetJoinedResult());
                 ms.Position = 0;
                 ms.CopyTo(output);

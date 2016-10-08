@@ -13,15 +13,13 @@ namespace ParallelSerializer
     {
         protected IScheduler Scheduler { get; }
 
-        public AutoResetEvent Handle { get; } = new AutoResetEvent(false);
-
         public WaitCallback Callback { get; }
 
         public T Object { get; set; }
 
-        public string Id { get; set; }
+        public TaskId Id { get; set; }
 
-        public SerializationContext SerializationContext { get; }
+        protected SerializationContext SerializationContext { get; }
 
         public SerializationTask(SerializationContext context, IScheduler scheduler)
         {
@@ -35,11 +33,10 @@ namespace ParallelSerializer
             using (var ms = new MemoryStream())
             using (var bw = new SmartBinaryWriter(ms))
             {
-                Scheduler.Handles.Add(Handle);
-                Handle.WaitOne();
+                SerializationContext.Barrier.Start();
                 Serialize(bw);
                 SerializationContext.Results.TryAdd(Id, ms.ToArray());
-                Handle.Set();
+                SerializationContext.Barrier.Stop();
             }
         }
 

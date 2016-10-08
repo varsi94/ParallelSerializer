@@ -9,11 +9,8 @@ namespace ParallelSerializer
 {
     public class TplScheduler : IScheduler
     {
-        public List<WaitHandle> Handles { get; } = new List<WaitHandle>();
-
         public void QueueWorkItem(ISerializationTask task)
         {
-            Console.WriteLine(task.Id + ": " + Thread.CurrentThread.ManagedThreadId);
             ThreadPool.QueueUserWorkItem(task.Callback);
         }
     }

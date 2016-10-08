@@ -14,14 +14,13 @@ namespace ParallelSerializer.App
     {
         static void Main(string[] args)
         {
-            var scheduler = new TplScheduler();
             using (var ms = new MemoryStream())
             {
-                ParallelSerializer serializer = new ParallelSerializer(scheduler);
+                var serializer = new ParallelSerializer(new TplScheduler());
                 var category = new Category
                 {
                     Name = "asdasd",
-                    Products = Enumerable.Range(1, 100).Select(x => new Product { Name = "asd" + x, ID = x + 1, Count = 5}).ToList()
+                    Products = Enumerable.Range(1, 100).Select(x => new Product { Name = "asd" + x, ID = x + 1, Count = 5 }).ToList()
                 };
                 var product = new Product
                 {
@@ -35,6 +34,7 @@ namespace ParallelSerializer.App
                 serializer.Serialize(product, ms);
                 ms.Position = 0;
                 var result = (Product)RoslynDynamicSerializerEngine.Deserialize(ms, false);
+                űConsole.ReadLine();
             }
         }
     }

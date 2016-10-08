@@ -9,8 +9,6 @@ namespace ParallelSerializer
 {
     public interface IScheduler
     {
-        List<WaitHandle> Handles { get; }
-
         void QueueWorkItem(ISerializationTask task);
     }
 }

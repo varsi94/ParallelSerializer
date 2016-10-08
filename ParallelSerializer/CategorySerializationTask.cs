@@ -35,7 +35,7 @@ namespace ParallelSerializer
                     {
                         var productST = new ProductSerializationTask(SerializationContext, Scheduler);
                         productST.Object = product;
-                        productST.Id = Id + "_" + i.ToString();
+                        productST.Id = Id.CreateChild(i);
                         i++;
                         Scheduler.QueueWorkItem(productST);
                     }

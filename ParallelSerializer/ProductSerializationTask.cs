@@ -11,25 +11,7 @@ namespace ParallelSerializer
 {
     //TO BE GENERATED
     public class ProductSerializationTask : SerializationTask<Product>
-    {
-        private class ProductPropSerailizationTask : SerializationTask<Product>
-        {
-            public ProductPropSerailizationTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
-            {
-            }
-
-            protected override void Serialize(SmartBinaryWriter bw)
-            {
-                bw.Write(Object.Count);
-                bw.Write(Object.ID);
-                bw.Write(Object.Name == null ? -1 : 0);
-                if (Object.Name != null)
-                {
-                    bw.Write(Object.Name);
-                }
-            }
-        }
-        
+    {   
         public ProductSerializationTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
         {
         }
@@ -42,16 +24,34 @@ namespace ParallelSerializer
                 var categoryST = new CategorySerializationTask(SerializationContext, Scheduler)
                 {
                     Object = Object.Category,
-                    Id = Id + "_1"
+                    Id = Id.CreateChild(1)
                 };
                 Scheduler.QueueWorkItem(categoryST);
 
-                var otherST = new ProductPropSerailizationTask(SerializationContext, Scheduler)
+                var otherST = new Product2SerializazionTask(SerializationContext, Scheduler)
                 {
                     Object = Object,
-                    Id = Id + "_2"
+                    Id = Id.CreateChild(2)
                 };
                 Scheduler.QueueWorkItem(otherST);
+            }
+        }
+    }
+
+    public class Product2SerializazionTask : SerializationTask<Product>
+    {
+        public Product2SerializazionTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
+        {
+        }
+
+        protected override void Serialize(SmartBinaryWriter bw)
+        {
+            bw.Write(Object.Count);
+            bw.Write(Object.ID);
+            bw.Write(Object.Name == null ? -1 : 0);
+            if (Object.Name != null)
+            {
+                bw.Write(Object.Name);
             }
         }
     }

@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Barrier.cs" />
     <Compile Include="CategorySerializationTask.cs" />
     <Compile Include="IScheduler.cs" />
     <Compile Include="ISerializationTask.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="SerializationContext.cs" />
     <Compile Include="SerializationResults.cs" />
     <Compile Include="SerializationTask.cs" />
+    <Compile Include="TaskId.cs" />
     <Compile Include="TplScheduler.cs" />
   </ItemGroup>
   <ItemGroup>

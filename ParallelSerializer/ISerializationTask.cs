@@ -9,7 +9,7 @@ namespace ParallelSerializer
 {
     public interface ISerializationTask
     {
-        string Id { get; }
+        TaskId Id { get; }
         WaitCallback Callback { get; }
     }
 }
