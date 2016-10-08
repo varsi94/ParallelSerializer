@@ -34,7 +34,7 @@ namespace ParallelSerializer.App
                 serializer.Serialize(product, ms);
                 ms.Position = 0;
                 var result = (Product)RoslynDynamicSerializerEngine.Deserialize(ms, false);
-                űConsole.ReadLine();
+                Console.ReadLine();
             }
         }
     }
