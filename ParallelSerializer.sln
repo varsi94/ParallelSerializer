@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParallelSerializer", "Paral
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParallelSerializer.App", "ParallelSerializer.App\ParallelSerializer.App.csproj", "{8C40837C-ED97-4851-A5B2-7D12D61D4360}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Externals", "Externals", "{86365249-CABA-4C49-A57A-8FD97846E4E4}"
+	ProjectSection(SolutionItems) = preProject
+		Externals\DynamicSerializer.Core.dll = Externals\DynamicSerializer.Core.dll
+		Externals\DynamicSerializer.Roslyn.dll = Externals\DynamicSerializer.Roslyn.dll
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

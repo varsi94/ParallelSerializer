@@ -33,8 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DynamicSerializer.Roslyn">
-      <HintPath>..\..\Lajharmaki\DynamicSerializer\DynamicSerializer.Roslyn\bin\Debug\DynamicSerializer.Roslyn.dll</HintPath>
+    <Reference Include="DynamicSerializer.Roslyn, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Externals\DynamicSerializer.Roslyn.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
