@@ -11,7 +11,7 @@ namespace ParallelSerializer
     {
         public void QueueWorkItem(ISerializationTask task)
         {
-            ThreadPool.QueueUserWorkItem(task.Callback);
+            ThreadPool.QueueUserWorkItem(task.SerializeObject);
         }
     }
 }

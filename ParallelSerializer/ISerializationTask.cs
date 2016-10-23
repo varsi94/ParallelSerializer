@@ -10,6 +10,6 @@ namespace ParallelSerializer
     public interface ISerializationTask
     {
         TaskId Id { get; }
-        WaitCallback Callback { get; }
+        void SerializeObject(object state);
     }
 }

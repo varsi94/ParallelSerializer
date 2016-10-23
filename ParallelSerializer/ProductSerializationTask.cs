@@ -28,7 +28,7 @@ namespace ParallelSerializer
                 };
                 Scheduler.QueueWorkItem(categoryST);
 
-                var otherST = new Product2SerializazionTask(SerializationContext, Scheduler)
+                var otherST = new Product2SerializationTask(SerializationContext, Scheduler)
                 {
                     Object = Object,
                     Id = Id.CreateChild(2)
@@ -38,9 +38,9 @@ namespace ParallelSerializer
         }
     }
 
-    public class Product2SerializazionTask : SerializationTask<Product>
+    public class Product2SerializationTask : SerializationTask<Product>
     {
-        public Product2SerializazionTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
+        public Product2SerializationTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
         {
         }
 

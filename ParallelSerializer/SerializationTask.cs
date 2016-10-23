@@ -13,8 +13,6 @@ namespace ParallelSerializer
     {
         protected IScheduler Scheduler { get; }
 
-        public WaitCallback Callback { get; }
-
         public T Object { get; set; }
 
         public TaskId Id { get; set; }
@@ -23,12 +21,11 @@ namespace ParallelSerializer
 
         public SerializationTask(SerializationContext context, IScheduler scheduler)
         {
-            Callback = SerializeCallback;
             SerializationContext = context;
             Scheduler = scheduler;
         }
 
-        private void SerializeCallback(object state)
+        public void SerializeObject(object state)
         {
             using (var ms = new MemoryStream())
             using (var bw = new SmartBinaryWriter(ms))
