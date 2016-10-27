@@ -19,8 +19,9 @@ namespace ParallelSerializer
 
         protected SerializationContext SerializationContext { get; }
 
-        public SerializationTask(SerializationContext context, IScheduler scheduler)
+        public SerializationTask(T obj, SerializationContext context, IScheduler scheduler)
         {
+            Object = obj;
             SerializationContext = context;
             Scheduler = scheduler;
         }

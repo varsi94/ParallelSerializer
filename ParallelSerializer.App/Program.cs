@@ -1,5 +1,6 @@
 ﻿using DemoModel;
 using DynamicSerializer.Roslyn;
+using ParallelSerializer.Generator;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,27 +15,12 @@ namespace ParallelSerializer.App
     {
         static void Main(string[] args)
         {
+            var parallelSerializer = new ParallelSerializer(new TplScheduler());
             using (var ms = new MemoryStream())
             {
-                var serializer = new ParallelSerializer(new TplScheduler());
-                var category = new Category
-                {
-                    Name = "asdasd",
-                    Products = Enumerable.Range(1, 100).Select(x => new Product { Name = "asd" + x, ID = x + 1, Count = 5 }).ToList()
-                };
-                var product = new Product
-                {
-                    Name = "asd",
-                    ID = 1,
-                    Category = category,
-                    Count = 5
-                };
-
-                RoslynDynamicSerializerEngine.SerializeAssembly = true;
-                serializer.Serialize(product, ms);
+                parallelSerializer.Serialize(15, ms);
                 ms.Position = 0;
-                var result = (Product)RoslynDynamicSerializerEngine.Deserialize(ms, false);
-                Console.ReadLine();
+                var result = (int) RoslynDynamicSerializerEngine.Deserialize(ms);
             }
         }
     }

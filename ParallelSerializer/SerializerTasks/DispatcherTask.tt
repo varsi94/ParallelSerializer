@@ -1,0 +1,48 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DynamicSerializer.Core;
+using ParallelSerializer.Generator;
+
+namespace ParallelSerializer.SerializerTasks
+{
+    public class DispatcherTask : SerializationTask<object>
+    {
+        public DispatcherTask(object obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
+        {
+        }
+
+        protected override void Serialize(SmartBinaryWriter binaryWriter)
+        {
+            if (Object == null)
+            {
+                binaryWriter.Write(-1);
+            }
+			var type = Object.GetType();
+<#
+			List<string> types = new List<string> { "string", "int", "long", "short",
+            "bool", "double", "byte", "char", "byte", "sbyte", "float",
+            "uint", "ulong", "ushort", "DateTime" };
+			foreach (var type in types) 
+			{
+#>
+
+			if (type == typeof(<#=type#>))
+			{
+				binaryWriter.Write((<#=type#>)Object);
+				return;
+			}
+<#
+			}
+#>
+        }
+    }
+}
