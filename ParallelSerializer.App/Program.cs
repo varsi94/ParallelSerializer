@@ -16,11 +16,17 @@ namespace ParallelSerializer.App
         static void Main(string[] args)
         {
             var parallelSerializer = new ParallelSerializer(new TplScheduler());
+            var product = new Product
+            {
+                Name = "aasd",
+                Count = 2,
+                Category = new Category() {  ID = 5, Name = "DummyCategory"}
+            };
             using (var ms = new MemoryStream())
             {
-                parallelSerializer.Serialize(15, ms);
+                parallelSerializer.Serialize(product, ms);
                 ms.Position = 0;
-                var result = (int) RoslynDynamicSerializerEngine.Deserialize(ms);
+                var result = RoslynDynamicSerializerEngine.Deserialize(ms);
             }
         }
     }

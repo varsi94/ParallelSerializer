@@ -10,6 +10,11 @@ namespace ParallelSerializer.SerializerTasks
 {
     public class DispatcherTask : SerializationTask<object>
     {
+        static DispatcherTask()
+        {
+            DispatcherGenerator.Initialize();
+        }
+
         public DispatcherTask(object obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
         {
         }
@@ -111,6 +116,16 @@ namespace ParallelSerializer.SerializerTasks
 				binaryWriter.Write((DateTime)Object);
 				return;
 			}
+        }
+
+        protected override void SetupChildTasks()
+        {
+            if (!SerializerState.KnownTypesSerialize.Contains(Object.GetType()))
+            {
+                var customDispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
+				customDispatcher.Id = Id.CreateChild(++SubTaskCount);
+				ChildTasks.Add(customDispatcher);
+            }
         }
     }
 }

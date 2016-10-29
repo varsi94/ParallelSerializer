@@ -13,13 +13,15 @@ namespace ParallelSerializer
         private readonly object syncRoot = new object();
         private readonly AutoResetEvent resetEvent = new AutoResetEvent(false);
 
-        public void Start()
+        public void Start(string info = null)
         {
+            Console.WriteLine("Start: " + info + " " + Thread.CurrentThread.ManagedThreadId);
             Interlocked.Increment(ref counter);
         }
 
-        public void Stop()
+        public void Stop(string info = null)
         {
+            Console.WriteLine("Stop: " + info);
             lock (syncRoot)
             {
                 counter--;

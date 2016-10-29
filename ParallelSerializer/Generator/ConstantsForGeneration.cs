@@ -11,5 +11,7 @@ namespace ParallelSerializer.Generator
         public const string TaskNamespace = "ParallelSerializer.SerializerTasks";
         public const string SerializeMethodName = "Serialize";
         public const string BinaryWriterName = "bw";
+        public const string DispatcherClassName = "CustomDispatcherTask";
+        public const string SetupFactoryMethodName = "SetupFactory";
     }
 }

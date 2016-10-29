@@ -7,14 +7,21 @@ using DynamicSerializer.Core;
 
 namespace ParallelSerializer
 {
-    public class DummyTask : SerializationTask<List<int>>
+    public class DummyTask : SerializationTask<int>
     {
-        public DummyTask(SerializationContext context, IScheduler scheduler) : base(context, scheduler)
+        public DummyTask(int obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
         {
+            SetupChildTasks();
         }
 
         protected override void Serialize(SmartBinaryWriter bw)
         {
+
+        }
+
+        protected override void SetupChildTasks()
+        {
+
         }
     }
 }

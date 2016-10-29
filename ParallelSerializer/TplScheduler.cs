@@ -13,5 +13,10 @@ namespace ParallelSerializer
         {
             ThreadPool.QueueUserWorkItem(task.SerializeObject);
         }
+
+        public void WaitAll(WaitHandle[] handles)
+        {
+            WaitHandle.WaitAll(handles);
+        }
     }
 }
