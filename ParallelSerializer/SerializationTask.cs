@@ -15,7 +15,7 @@ namespace ParallelSerializer
     {
         protected int SubTaskCount { get; set; } = 0;
 
-        protected List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
+        public List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
 
         protected IScheduler Scheduler { get; }
 
@@ -74,7 +74,7 @@ namespace ParallelSerializer
                     Serialize(bw);
                     if (SubTasks.Count > 0 && Object != null)
                     {
-                        Scheduler.WaitAll(SubTasks.Select(x => x.WaitHandle).ToArray());
+                        Scheduler.WaitAllSubTasks(this);
                     }
                     SerializationContext.Results.TryAdd(Id, ms.ToArray());
                     SerializationContext.Barrier.Stop(Id + " " + GetType().Name);

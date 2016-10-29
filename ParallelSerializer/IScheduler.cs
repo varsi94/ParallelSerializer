@@ -11,6 +11,6 @@ namespace ParallelSerializer
     {
         void QueueWorkItem(ISerializationTask task);
 
-        void WaitAll(WaitHandle[] handles);
+        void WaitAllSubTasks(ISerializationTask task);
     }
 }

@@ -16,5 +16,7 @@ namespace ParallelSerializer
         AutoResetEvent WaitHandle { get; set; }
 
         void DisposeHandles();
+
+        List<ISerializationTask> SubTasks { get; }
     }
 }
