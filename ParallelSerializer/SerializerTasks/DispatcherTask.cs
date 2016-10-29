@@ -124,7 +124,7 @@ namespace ParallelSerializer.SerializerTasks
             {
                 var customDispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
 				customDispatcher.Id = Id.CreateChild(++SubTaskCount);
-				ChildTasks.Add(customDispatcher);
+				SubTasks.Add(customDispatcher);
             }
         }
     }

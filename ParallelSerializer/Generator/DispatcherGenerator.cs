@@ -14,10 +14,39 @@ namespace ParallelSerializer.Generator
 {
     public static class DispatcherGenerator
     {
+        private static ClassDeclarationSyntax AddNullChecking(ClassDeclarationSyntax taskClass)
+        {
+            var serializeMethod = taskClass.GetSerializerMethod();
+            var newSerializerMethod = serializeMethod.AddBodyStatements(SyntaxFactory.IfStatement(
+                SyntaxFactory.BinaryExpression(
+                    SyntaxKind.EqualsExpression,
+                    SyntaxFactory.IdentifierName("Object"),
+                    SyntaxFactory.LiteralExpression(
+                        SyntaxKind.NullLiteralExpression)),
+                SyntaxFactory.Block(
+                    SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
+                                SyntaxFactory.IdentifierName("Write")))
+                            .WithArgumentList(
+                                SyntaxFactory.ArgumentList(
+                                    SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.PrefixUnaryExpression(
+                                                SyntaxKind.UnaryMinusExpression,
+                                                SyntaxFactory.LiteralExpression(
+                                                    SyntaxKind.NumericLiteralExpression,
+                                                    SyntaxFactory.Literal(1)))))))),
+                    SyntaxFactory.ReturnStatement()))
+                );
+            return taskClass.ReplaceNode(serializeMethod, newSerializerMethod);
+        }
         public static CompilationUnitSyntax GenerateDispatcher()
         {
             var dispatcher = typeof(object).GetSerializerTask(ConstantsForGeneration.DispatcherClassName);
-            dispatcher = TaskGenerator.AddNullChecking(dispatcher);
+            dispatcher = AddNullChecking(dispatcher);
             var serializeMethod = dispatcher.GetSerializerMethod();
             var setupMethod = dispatcher.GetSetupChildTasksMethod();
 

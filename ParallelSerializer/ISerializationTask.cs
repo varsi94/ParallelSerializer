@@ -14,5 +14,7 @@ namespace ParallelSerializer
         void SerializeObject(object state);
 
         AutoResetEvent WaitHandle { get; set; }
+
+        void DisposeHandles();
     }
 }

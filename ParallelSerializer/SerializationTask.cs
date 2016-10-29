@@ -15,7 +15,7 @@ namespace ParallelSerializer
     {
         protected int SubTaskCount { get; set; } = 0;
 
-        protected List<ISerializationTask> ChildTasks { get; } = new List<ISerializationTask>();
+        protected List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
 
         protected IScheduler Scheduler { get; }
 
@@ -42,7 +42,7 @@ namespace ParallelSerializer
                 TaskGenerator.GenerateTasksForClass(Object.GetType());
                 var task = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
                 task.Id = Id.CreateChild(++SubTaskCount);
-                ChildTasks.Add(task);
+                SubTasks.Add(task);
                 return true;
             }
             return false;
@@ -66,15 +66,15 @@ namespace ParallelSerializer
                     SerializationContext.Barrier.Start(Id + " " + GetType().Name);
                     if (Object != null)
                     {
-                        foreach (var task in ChildTasks)
+                        foreach (var task in SubTasks)
                         {
                             Scheduler.QueueWorkItem(task);
                         }
                     }
                     Serialize(bw);
-                    if (ChildTasks.Count > 0 && Object != null)
+                    if (SubTasks.Count > 0 && Object != null)
                     {
-                        Scheduler.WaitAll(ChildTasks.Select(x => x.WaitHandle).ToArray());
+                        Scheduler.WaitAll(SubTasks.Select(x => x.WaitHandle).ToArray());
                     }
                     SerializationContext.Results.TryAdd(Id, ms.ToArray());
                     SerializationContext.Barrier.Stop(Id + " " + GetType().Name);
@@ -89,5 +89,13 @@ namespace ParallelSerializer
         protected abstract void Serialize(SmartBinaryWriter bw);
 
         protected abstract void SetupChildTasks();
+
+        public void DisposeHandles()
+        {
+            foreach (var task in SubTasks)
+            {
+                task.WaitHandle.Dispose();
+            }
+        }
     }
 }
