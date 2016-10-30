@@ -51,7 +51,7 @@ namespace ParallelSerializer.Generator
             var serializeMethod = dispatcher.GetSerializerMethod();
             var setupMethod = dispatcher.GetSetupChildTasksMethod();
 
-            foreach (var type in SerializerState.TaskDictionary.Where(x => x.Key != typeof(object)).Select(x => x.Key))
+            foreach (var type in SerializerState.KnownTypesSerialize.Where(x => !x.IsAtomic()))
             {
                 var argument = SyntaxFactory.Argument(SyntaxFactory.CastExpression(
                     SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName()),
@@ -134,7 +134,7 @@ namespace ParallelSerializer.Generator
             SerializerState.Compilation = CSharpCompilation.Create("SerializerAssembly",
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddSyntaxTrees(GenerateDispatcher().SyntaxTree);
-            foreach (var assemblyLocation in SerializerState.TaskDictionary.GetAssemblyLocations()
+            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.Select(x => x.Assembly.Location)
                 .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
             {
                 if (!SerializerState.References.Contains(assemblyLocation))

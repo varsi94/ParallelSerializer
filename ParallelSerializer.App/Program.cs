@@ -23,9 +23,16 @@ namespace ParallelSerializer.App
                 Products =
                     Enumerable.Range(1, 100).Select(x => new Product {Name = "Staropramen" + x, ID = x, Count = 5}).ToList()
             };
+
+            var product = new Product
+            {
+                Name = "Budweiser",
+                ID = 2,
+                Category = category
+            };
             using (var ms = new MemoryStream())
             {
-                parallelSerializer.Serialize(category, ms);
+                parallelSerializer.Serialize(product, ms);
                 TaskGenerator.GenerateAssembly();
                 ms.Position = 0;
                 var result = parallelSerializer.Deserialize(ms);

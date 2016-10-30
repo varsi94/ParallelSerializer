@@ -12,6 +12,7 @@ namespace ParallelSerializer.Generator
         public const string SerializeMethodName = "Serialize";
         public const string BinaryWriterName = "bw";
         public const string DispatcherClassName = "CustomDispatcherTask";
+        public const string LazyDispatcherClassName = nameof(LazyDispatcherTask);
         public const string SetupFactoryMethodName = "SetupFactory";
     }
 }

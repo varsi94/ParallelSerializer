@@ -41,15 +41,15 @@ namespace ParallelSerializer
                 scheduler.QueueWorkItem(task);
                 context.Barrier.WaitForAll();
 
-                outputWriter.Write(SerializerState.TaskDictionary.Count);
-                foreach (var newType in SerializerState.TaskDictionary.OrderBy(x => x.Value.TypeId).Select(x => x.Key))
+                outputWriter.Write(SerializerState.KnownTypesSerialize.Count - 15);
+                foreach (var newType in SerializerState.KnownTypesSerialize.Skip(15))
                 {
                     outputWriter.Write(newType.AssemblyQualifiedName);
                 }
 
                 if (obj != null && (obj.GetType().IsValueType || obj is string))
                 {
-                    outputWriter.Write(SerializerState.TaskDictionary[obj.GetType()].TypeId);
+                    outputWriter.Write(SerializerState.KnownTypesSerialize.IndexOf(obj.GetType()));
                 }
                 outputWriter.Write(context.Results.GetJoinedResult());
                 ms.Position = 0;

@@ -18,6 +18,8 @@ namespace ParallelSerializer.Generator
 {
     public static class TaskGenerator
     {
+        internal static object TaskGenerationSyncRoot { get; } = new object();
+
         private static StatementSyntax SerializeAtomicType(SerializableMember member)
         {
             var writeExpression = SyntaxFactory.ExpressionStatement(
@@ -134,37 +136,25 @@ namespace ParallelSerializer.Generator
 
         public static void GenerateTasksForClass(Type type)
         {
-            TaskGenerationResult currResult = null;
-            SerializerState.TaskDictionary.TryGetValue(type, out currResult);
-            if (currResult == null)
-            {
-                currResult = new TaskGenerationResult { TypeId = SerializerState.TypeCount };
-                Interlocked.Increment(ref SerializerState.TypeCount);
-                SerializerState.TaskDictionary.AddOrUpdate(type, currResult, (x, y) => y);
-            }
-            else
-            {
-                currResult.AutoResetEvent.WaitOne();
-                return;
-            }
+            SerializerState.KnownTypesSerialize.Add(type);
+            int typeId = SerializerState.KnownTypesSerialize.IndexOf(type);
 
             List<ClassDeclarationSyntax> classes = null;
             if (type.IsGenericCollection())
             {
                 if (type.IsGenericDictionary())
                 {
-                    classes = SerializeDictionary(type, currResult.TypeId);
+                    classes = SerializeDictionary(type, typeId);
                 }
 
-                classes = SerializeCollection(type, currResult.TypeId);
+                classes = SerializeCollection(type, typeId);
             }
             else
             {
-                classes = SerializeNonCollection(type, currResult.TypeId);
+                classes = SerializeNonCollection(type, typeId);
             }
             
             CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes).NormalizeWhitespace();
-
             var dispatcher =
                 SerializerState.Compilation.SyntaxTrees.SingleOrDefault(
                     x =>
@@ -182,7 +172,7 @@ namespace ParallelSerializer.Generator
                 SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher().SyntaxTree);
             SerializerState.Compilation = SerializerState.Compilation.AddSyntaxTrees(compUnit.SyntaxTree);
 
-            foreach (var assemblyLocation in SerializerState.TaskDictionary.GetAssemblyLocations()
+            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.Select(x => x.Assembly.Location)
                 .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
             {
                 if (!SerializerState.References.Contains(assemblyLocation))
@@ -194,7 +184,6 @@ namespace ParallelSerializer.Generator
             }
 
             Emit();
-            currResult.AutoResetEvent.Set();
         }
 
         private static List<ClassDeclarationSyntax> SerializeCollection(Type type, int typeId)
@@ -208,7 +197,7 @@ namespace ParallelSerializer.Generator
             else
             {
                 var setupMethod = mainClass.GetSetupChildTasksMethod();
-                var statement = AddTaskCreation(ConstantsForGeneration.DispatcherClassName, SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
+                var statement = AddTaskCreation(ConstantsForGeneration.LazyDispatcherClassName, SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
                 var foreachStatement = SyntaxFactory.ForEachStatement(
                     SyntaxFactory.IdentifierName(type.GenericTypeArguments[0].GetFullCorrectTypeName()),
                     SyntaxFactory.Identifier("item"),
@@ -280,7 +269,7 @@ namespace ParallelSerializer.Generator
                             SyntaxKind.SimpleMemberAccessExpression,
                             SyntaxFactory.IdentifierName("Object"),
                             SyntaxFactory.IdentifierName(serializableMember.Name)));
-                    setupMethod = setupMethod.AddBodyStatements(AddTaskCreation(ConstantsForGeneration.DispatcherClassName, argument));
+                    setupMethod = setupMethod.AddBodyStatements(AddTaskCreation(ConstantsForGeneration.LazyDispatcherClassName, argument));
                     if (lastAtomic > i)
                     {
                         var nextClass = type.GetSerializerTask(type.GetSerializerTaskName(classCount));
@@ -333,7 +322,7 @@ namespace ParallelSerializer.Generator
                 SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(ConstantsForGeneration.TaskNamespace));
             nameSpace = nameSpace.AddMembers(classes.ToArray());
             var compUnit = SyntaxFactory.CompilationUnit().AddMembers(nameSpace);
-            foreach (var ns in SerializerState.TaskDictionary.GetNamespaces().Union(new[]
+            foreach (var ns in SerializerState.KnownTypesSerialize.Select(x => x.Namespace).Union(new[]
             {
                 typeof(object).Namespace, typeof(ISerializationTask).Namespace, typeof(SmartBinaryWriter).Namespace,
                 typeof(TaskGenerator).Namespace

@@ -122,7 +122,7 @@ namespace ParallelSerializer.SerializerTasks
         {
             if (!SerializerState.KnownTypesSerialize.Contains(Object.GetType()))
             {
-                var customDispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
+                var customDispatcher = new LazyDispatcherTask(Object, SerializationContext, Scheduler);
 				customDispatcher.Id = Id.CreateChild(++SubTaskCount);
 				SubTasks.Add(customDispatcher);
             }

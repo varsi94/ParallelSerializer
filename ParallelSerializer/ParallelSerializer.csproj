@@ -127,17 +127,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Barrier.cs" />
-    <Compile Include="DummyTask.cs" />
     <Compile Include="Extensions\ClassDeclarationExtensions.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
     <Compile Include="Generator\ConstantsForGeneration.cs" />
     <Compile Include="Generator\DispatcherGenerator.cs" />
     <Compile Include="Generator\SerializerState.cs" />
-    <Compile Include="Generator\TaskDictionary.cs" />
-    <Compile Include="Generator\TaskGenerationResult.cs" />
     <Compile Include="Generator\TaskGenerator.cs" />
     <Compile Include="IScheduler.cs" />
     <Compile Include="ISerializationTask.cs" />
+    <Compile Include="LazyDispatcherTask.cs" />
     <Compile Include="ParallelSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializationContext.cs" />

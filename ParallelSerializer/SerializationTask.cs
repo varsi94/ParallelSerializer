@@ -30,22 +30,7 @@ namespace ParallelSerializer
             Object = obj;
             SerializationContext = context;
             Scheduler = scheduler;
-            SerializationContext.Barrier.Start(Id + " " + GetType().Name);
-        }
-
-        private bool GenerateNewClassTasks()
-        {
-            TaskGenerationResult result;
-            SerializerState.TaskDictionary.TryGetValue(Object.GetType(), out result);
-            if (result == null)
-            {
-                TaskGenerator.GenerateTasksForClass(Object.GetType());
-                var task = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
-                task.Id = Id.CreateChild(++SubTaskCount);
-                SubTasks.Add(task);
-                return true;
-            }
-            return false;
+            SerializationContext.Barrier.Start();
         }
 
         public void SerializeObject(object state)
@@ -54,12 +39,7 @@ namespace ParallelSerializer
             {
                 if (Object != null)
                 {
-                    bool generated = GenerateNewClassTasks();
-                    if (!generated)
-                    {
-                        SetupChildTasks();
-                    }
-
+                    SetupChildTasks();
                     foreach (var task in SubTasks)
                     {
                         Scheduler.QueueWorkItem(task);
@@ -75,7 +55,7 @@ namespace ParallelSerializer
             }
             finally
             {
-                SerializationContext.Barrier.Stop(Id + " " + GetType().Name);
+                SerializationContext.Barrier.Stop();
             }
         }
 
