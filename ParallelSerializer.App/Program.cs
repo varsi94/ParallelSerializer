@@ -16,23 +16,10 @@ namespace ParallelSerializer.App
         static void Main(string[] args)
         {
             var parallelSerializer = new ParallelSerializer(new TplScheduler());
-            var category = new Category
-            {
-                Name = "ital",
-                ID = 1,
-                Products =
-                    Enumerable.Range(1, 100).Select(x => new Product {Name = "Staropramen" + x, ID = x, Count = 5}).ToList()
-            };
-
-            var product = new Product
-            {
-                Name = "Budweiser",
-                ID = 2,
-                Category = category
-            };
+            var list = Enumerable.Range(1, 100).ToList();
             using (var ms = new MemoryStream())
             {
-                parallelSerializer.Serialize(product, ms);
+                parallelSerializer.Serialize(list, ms);
                 TaskGenerator.GenerateAssembly();
                 ms.Position = 0;
                 var result = parallelSerializer.Deserialize(ms);
