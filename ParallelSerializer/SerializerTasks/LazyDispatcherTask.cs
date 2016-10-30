@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ParallelSerializer
+namespace ParallelSerializer.SerializerTasks
 {
     public class LazyDispatcherTask : ISerializationTask
     {

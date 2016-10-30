@@ -69,7 +69,10 @@ namespace ParallelSerializer.Generator
                         .WithElse(
                             SyntaxFactory.ElseClause(SyntaxFactory.Block(
                                         SyntaxFactory.ExpressionStatement(
-                                            SyntaxFactory.InvocationExpression(expr)
+                                            SyntaxFactory.InvocationExpression(SyntaxFactory.MemberAccessExpression(
+                                            SyntaxKind.SimpleMemberAccessExpression,
+                                            SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
+                                            SyntaxFactory.IdentifierName("Write")))
                                             .WithArgumentList(
                                                 SyntaxFactory.ArgumentList(
                                                     SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
@@ -109,7 +112,7 @@ namespace ParallelSerializer.Generator
                                                         argument,
                                                         SyntaxFactory.Token(SyntaxKind.CommaToken),
                                                         SyntaxFactory.Argument(
-                                                            SyntaxFactory.IdentifierName("SerializationContext")),
+                                                            SyntaxFactory.IdentifierName(nameof(SerializationContext))),
                                                         SyntaxFactory.Token(SyntaxKind.CommaToken),
                                                         SyntaxFactory.Argument(
                                                             SyntaxFactory.IdentifierName("Scheduler"))
@@ -140,23 +143,17 @@ namespace ParallelSerializer.Generator
         {
             SerializerState.KnownTypesSerialize.Add(type);
             int typeId = SerializerState.KnownTypesSerialize.IndexOf(type);
-
             List<ClassDeclarationSyntax> classes = null;
             if (type.IsGenericCollection())
             {
-                if (type.IsGenericDictionary())
-                {
-                    classes = SerializeDictionary(type, typeId);
-                }
-
-                classes = SerializeCollection(type, typeId);
+                classes = SerializeCollection(type, typeId, type.IsGenericDictionary());
             }
             else
             {
                 classes = SerializeNonCollection(type, typeId);
             }
-            
-            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes).NormalizeWhitespace();
+
+            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes);
             var dispatcher =
                 SerializerState.Compilation.SyntaxTrees.SingleOrDefault(
                     x =>
@@ -173,7 +170,12 @@ namespace ParallelSerializer.Generator
             SerializerState.Compilation =
                 SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher().SyntaxTree);
             SerializerState.Compilation = SerializerState.Compilation.AddSyntaxTrees(compUnit.SyntaxTree);
+            RefreshReferences();
+            Emit();
+        }
 
+        internal static void RefreshReferences()
+        {
             foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.Select(x => x.Assembly.Location)
                 .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
             {
@@ -184,19 +186,21 @@ namespace ParallelSerializer.Generator
                         SerializerState.Compilation.AddReferences(MetadataReference.CreateFromFile(assemblyLocation));
                 }
             }
-
-            Emit();
         }
 
-        private static List<ClassDeclarationSyntax> SerializeCollection(Type type, int typeId)
+        private static List<ClassDeclarationSyntax> SerializeCollection(Type type, int typeId, bool isDictionary)
         {
+            if (isDictionary)
+            {
+                throw new NotImplementedException();
+            }
             var classes = new List<ClassDeclarationSyntax>();
             var mainClass = type.GetSerializerTask(type.GetSerializerTaskName());
             StatementSyntax statement = null;
             var serializeMethod = mainClass.GetSerializerMethod();
             var setupMethod = mainClass.GetSetupChildTasksMethod();
             var foreachStatement = SyntaxFactory.ForEachStatement(
-                SyntaxFactory.IdentifierName(type.GenericTypeArguments[0].GetFullCorrectTypeName()),
+                SyntaxFactory.ParseTypeName(type.GenericTypeArguments[0].GetFullCorrectTypeName()),
                 SyntaxFactory.Identifier("item"),
                 SyntaxFactory.IdentifierName("Object"),
                 SyntaxFactory.Block());
@@ -219,11 +223,6 @@ namespace ParallelSerializer.Generator
             mainClass = mainClass.ReplaceNode(mainClass.GetSerializerMethod(), serializeMethod);
             classes.Add(mainClass);
             return classes;
-        }
-
-        private static List<ClassDeclarationSyntax> SerializeDictionary(Type type, int typeId)
-        {
-            throw new NotImplementedException();
         }
 
         private static StatementSyntax GetTypeIdSerialization(int typeId)
@@ -329,8 +328,8 @@ namespace ParallelSerializer.Generator
             foreach (var ns in SerializerState.KnownTypesSerialize.Select(x => x.Namespace).Union(new[]
             {
                 typeof(object).Namespace, typeof(ISerializationTask).Namespace, typeof(SmartBinaryWriter).Namespace,
-                typeof(TaskGenerator).Namespace
-            }))
+                typeof(TaskGenerator).Namespace, typeof(KeyValuePair<,>).Namespace
+            }).Distinct())
             {
                 compUnit = compUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
             }

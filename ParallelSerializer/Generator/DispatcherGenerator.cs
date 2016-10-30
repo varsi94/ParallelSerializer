@@ -134,17 +134,7 @@ namespace ParallelSerializer.Generator
             SerializerState.Compilation = CSharpCompilation.Create("SerializerAssembly",
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddSyntaxTrees(GenerateDispatcher().SyntaxTree);
-            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.Select(x => x.Assembly.Location)
-                .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
-            {
-                if (!SerializerState.References.Contains(assemblyLocation))
-                {
-                    SerializerState.References.Add(assemblyLocation);
-                    SerializerState.Compilation =
-                        SerializerState.Compilation.AddReferences(MetadataReference.CreateFromFile(assemblyLocation));
-                }
-            }
-
+            TaskGenerator.RefreshReferences();
             TaskGenerator.Emit();
         }
     }
