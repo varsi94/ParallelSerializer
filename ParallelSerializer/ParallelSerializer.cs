@@ -33,11 +33,13 @@ namespace ParallelSerializer
                     Barrier = barrier
                 };
 
-                var task = new DispatcherTask(obj, context, scheduler);
-                task.Object = obj;
-                task.Id = TaskId.CreateDefault();
+                var task = new DispatcherTask(obj, context, scheduler)
+                {
+                    Object = obj,
+                    Id = TaskId.CreateDefault()
+                };
                 scheduler.QueueWorkItem(task);
-                barrier.WaitForAll();
+                context.Barrier.WaitForAll();
 
                 outputWriter.Write(SerializerState.TaskDictionary.Count);
                 foreach (var newType in SerializerState.TaskDictionary.OrderBy(x => x.Value.TypeId).Select(x => x.Key))

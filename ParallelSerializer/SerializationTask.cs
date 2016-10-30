@@ -25,19 +25,19 @@ namespace ParallelSerializer
 
         protected SerializationContext SerializationContext { get; }
 
-        public AutoResetEvent WaitHandle { get; set; }
-
         public SerializationTask(T obj, SerializationContext context, IScheduler scheduler)
         {
             Object = obj;
             SerializationContext = context;
             Scheduler = scheduler;
-            WaitHandle = new AutoResetEvent(false);
+            SerializationContext.Barrier.Start(Id + " " + GetType().Name);
         }
 
         private bool GenerateNewClassTasks()
         {
-            if (!SerializerState.TaskDictionary.ContainsKey(Object.GetType()))
+            TaskGenerationResult result;
+            SerializerState.TaskDictionary.TryGetValue(Object.GetType(), out result);
+            if (result == null)
             {
                 TaskGenerator.GenerateTasksForClass(Object.GetType());
                 var task = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
@@ -50,52 +50,37 @@ namespace ParallelSerializer
 
         public void SerializeObject(object state)
         {
-            if (Object != null)
-            {
-                bool generated = GenerateNewClassTasks();
-                if (!generated)
-                {
-                    SetupChildTasks();
-                }
-            }
             try
             {
+                if (Object != null)
+                {
+                    bool generated = GenerateNewClassTasks();
+                    if (!generated)
+                    {
+                        SetupChildTasks();
+                    }
+
+                    foreach (var task in SubTasks)
+                    {
+                        Scheduler.QueueWorkItem(task);
+                    }
+                }
+
                 using (var ms = new MemoryStream())
                 using (var bw = new SmartBinaryWriter(ms))
                 {
-                    SerializationContext.Barrier.Start(Id + " " + GetType().Name);
-                    if (Object != null)
-                    {
-                        foreach (var task in SubTasks)
-                        {
-                            Scheduler.QueueWorkItem(task);
-                        }
-                    }
                     Serialize(bw);
-                    if (SubTasks.Count > 0 && Object != null)
-                    {
-                        Scheduler.WaitAllSubTasks(this);
-                    }
                     SerializationContext.Results.TryAdd(Id, ms.ToArray());
-                    SerializationContext.Barrier.Stop(Id + " " + GetType().Name);
                 }
             }
             finally
             {
-                WaitHandle.Set();
+                SerializationContext.Barrier.Stop(Id + " " + GetType().Name);
             }
         }
 
         protected abstract void Serialize(SmartBinaryWriter bw);
 
         protected abstract void SetupChildTasks();
-
-        public void DisposeHandles()
-        {
-            foreach (var task in SubTasks)
-            {
-                task.WaitHandle.Dispose();
-            }
-        }
     }
 }

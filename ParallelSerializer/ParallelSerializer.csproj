@@ -148,6 +148,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>DispatcherTask.tt</DependentUpon>
     </Compile>
+    <Compile Include="SubTaskWaiter.cs" />
     <Compile Include="TaskId.cs" />
     <Compile Include="TplScheduler.cs" />
   </ItemGroup>

@@ -16,6 +16,7 @@ namespace ParallelSerializer.Extensions
     {
         internal static ClassDeclarationSyntax GetSerializerTask(this Type type, string name)
         {
+            TypeSyntax typeSyntax = SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName());
             return SyntaxFactory.ClassDeclaration(name)
                 .WithModifiers(
                     SyntaxFactory.TokenList(
@@ -28,8 +29,7 @@ namespace ParallelSerializer.Extensions
                                     SyntaxFactory.Identifier("SerializationTask"))
                                     .WithTypeArgumentList(
                                         SyntaxFactory.TypeArgumentList(
-                                            SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
-                                                SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName()))))))))
+                                            SyntaxFactory.SingletonSeparatedList<TypeSyntax>(typeSyntax)))))))
                 .WithMembers(
                     SyntaxFactory.List<MemberDeclarationSyntax>(
                         new MemberDeclarationSyntax[]
@@ -115,11 +115,30 @@ namespace ParallelSerializer.Extensions
 
         public static string GetSerializerTaskName(this Type t, int? id = null)
         {
+            string typeName = t.Namespace.Replace(".", "") + t.GetNameFriendlyTypeName();
             if (id.HasValue)
             {
-                return $"{t.GetFullCorrectTypeName()}{id.Value}SerializerTask";
+                return $"{typeName}{id.Value}SerializerTask";
             }
-            return $"{t.GetFullCorrectTypeName()}SerializerTask";
+            return $"{typeName}SerializerTask";
+        }
+
+        private static string GetNameFriendlyTypeName(this Type t)
+        {
+            if (t.IsGenericType)
+            {
+                return t.GetCorrectTypeName() + "_" +
+                       string.Join("_", t.GenericTypeArguments.Select(x => x.GetNameFriendlyTypeName()));
+            }
+            else if (t.IsArray)
+            {
+                //TODO: lehetséges névkonfliktus.
+                return t.GetElementType().GetCorrectTypeName() + "Array";
+            }
+            else
+            {
+                return t.GetCorrectTypeName();
+            }
         }
     }
 }

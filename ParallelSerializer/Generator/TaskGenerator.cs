@@ -20,6 +20,20 @@ namespace ParallelSerializer.Generator
     {
         private static StatementSyntax SerializeAtomicType(SerializableMember member)
         {
+            var writeExpression = SyntaxFactory.ExpressionStatement(
+                    SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
+                            SyntaxFactory.IdentifierName("Write")))
+                        .WithArgumentList(
+                            SyntaxFactory.ArgumentList(
+                                SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+                                    SyntaxFactory.Argument(
+                                        SyntaxFactory.MemberAccessExpression(
+                                            SyntaxKind.SimpleMemberAccessExpression,
+                                            SyntaxFactory.IdentifierName("Object"),
+                                            SyntaxFactory.IdentifierName(member.Name)))))));
             if (member.Type == typeof(string))
             {
                 return
@@ -63,39 +77,10 @@ namespace ParallelSerializer.Generator
                                                         SyntaxFactory.Argument(
                                                             SyntaxFactory.LiteralExpression(
                                                                 SyntaxKind.NumericLiteralExpression,
-                                                                SyntaxFactory.Literal(0))))))),
-                                        SyntaxFactory.ExpressionStatement(
-                                            SyntaxFactory.InvocationExpression(
-                                                SyntaxFactory.MemberAccessExpression(
-                                                    SyntaxKind.SimpleMemberAccessExpression,
-                                                    SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
-                                                    SyntaxFactory.IdentifierName("Write")))
-                                            .WithArgumentList(
-                                                SyntaxFactory.ArgumentList(
-                                                    SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
-                                                        SyntaxFactory.Argument(
-                                                            SyntaxFactory.MemberAccessExpression(
-                                                                SyntaxKind.SimpleMemberAccessExpression,
-                                                                SyntaxFactory.IdentifierName("Object"),
-                                                                SyntaxFactory.IdentifierName(member.Name))))))))));
+                                                                SyntaxFactory.Literal(0))))))), writeExpression)));
             }
-            else
-            {
-                return SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
-                            SyntaxFactory.IdentifierName("Write")))
-                        .WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.MemberAccessExpression(
-                                            SyntaxKind.SimpleMemberAccessExpression,
-                                            SyntaxFactory.IdentifierName("Object"),
-                                            SyntaxFactory.IdentifierName(member.Name)))))));
-            }
+
+            return writeExpression;
         }
 
         internal static StatementSyntax AddTaskCreation(string taskName, ArgumentSyntax argument)
@@ -150,35 +135,128 @@ namespace ParallelSerializer.Generator
         public static void GenerateTasksForClass(Type type)
         {
             TaskGenerationResult currResult = null;
-            if (!SerializerState.TaskDictionary.ContainsKey(type))
+            SerializerState.TaskDictionary.TryGetValue(type, out currResult);
+            if (currResult == null)
             {
                 currResult = new TaskGenerationResult { TypeId = SerializerState.TypeCount };
                 Interlocked.Increment(ref SerializerState.TypeCount);
-                SerializerState.TaskDictionary.TryAdd(type, currResult);
+                SerializerState.TaskDictionary.AddOrUpdate(type, currResult, (x, y) => y);
             }
             else
             {
-                SerializerState.TaskDictionary.TryGetValue(type, out currResult);
                 currResult.AutoResetEvent.WaitOne();
                 return;
             }
-            List<ClassDeclarationSyntax> classes = new List<ClassDeclarationSyntax>();
+
+            List<ClassDeclarationSyntax> classes = null;
+            if (type.IsGenericCollection())
+            {
+                if (type.IsGenericDictionary())
+                {
+                    classes = SerializeDictionary(type, currResult.TypeId);
+                }
+
+                classes = SerializeCollection(type, currResult.TypeId);
+            }
+            else
+            {
+                classes = SerializeNonCollection(type, currResult.TypeId);
+            }
+            
+            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes).NormalizeWhitespace();
+
+            var dispatcher =
+                SerializerState.Compilation.SyntaxTrees.SingleOrDefault(
+                    x =>
+                        x.GetRoot()
+                            .DescendantNodes()
+                            .OfType<ClassDeclarationSyntax>()
+                            .Any(c => c.Identifier.ToString() == ConstantsForGeneration.DispatcherClassName));
+
+            if (dispatcher != null)
+            {
+                SerializerState.Compilation = SerializerState.Compilation.RemoveSyntaxTrees(dispatcher);
+            }
+
+            SerializerState.Compilation =
+                SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher().SyntaxTree);
+            SerializerState.Compilation = SerializerState.Compilation.AddSyntaxTrees(compUnit.SyntaxTree);
+
+            foreach (var assemblyLocation in SerializerState.TaskDictionary.GetAssemblyLocations()
+                .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
+            {
+                if (!SerializerState.References.Contains(assemblyLocation))
+                {
+                    SerializerState.References.Add(assemblyLocation);
+                    SerializerState.Compilation =
+                        SerializerState.Compilation.AddReferences(MetadataReference.CreateFromFile(assemblyLocation));
+                }
+            }
+
+            Emit();
+            currResult.AutoResetEvent.Set();
+        }
+
+        private static List<ClassDeclarationSyntax> SerializeCollection(Type type, int typeId)
+        {
+            var classes = new List<ClassDeclarationSyntax>();
+            var mainClass = type.GetSerializerTask(type.GetSerializerTaskName());
+            if (type.GenericTypeArguments[0].IsAtomic())
+            {
+
+            }
+            else
+            {
+                var setupMethod = mainClass.GetSetupChildTasksMethod();
+                var statement = AddTaskCreation(ConstantsForGeneration.DispatcherClassName, SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
+                var foreachStatement = SyntaxFactory.ForEachStatement(
+                    SyntaxFactory.IdentifierName(type.GenericTypeArguments[0].GetFullCorrectTypeName()),
+                    SyntaxFactory.Identifier("item"),
+                    SyntaxFactory.IdentifierName("Object"),
+                    SyntaxFactory.Block().AddStatements(statement))
+                    .NormalizeWhitespace();
+                setupMethod = setupMethod.AddBodyStatements(foreachStatement);
+                mainClass = mainClass.ReplaceNode(mainClass.GetSetupChildTasksMethod(), setupMethod);
+
+                var serializeMethod = mainClass.GetSerializerMethod();
+                var countStatement = SerializeAtomicType(new SerializableMember {Name = "Count", Type = typeof(int)});
+                serializeMethod = serializeMethod.AddBodyStatements(GetTypeIdSerialization(typeId));
+                serializeMethod = serializeMethod.AddBodyStatements(countStatement);
+                mainClass = mainClass.ReplaceNode(mainClass.GetSerializerMethod(), serializeMethod);
+            }
+            classes.Add(mainClass);
+            return classes;
+        }
+
+        private static List<ClassDeclarationSyntax> SerializeDictionary(Type type, int typeId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static StatementSyntax GetTypeIdSerialization(int typeId)
+        {
+            return SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
+                        SyntaxFactory.IdentifierName("Write")))
+                    .WithArgumentList(
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+                                SyntaxFactory.Argument(
+                                    SyntaxFactory.LiteralExpression(
+                                        SyntaxKind.NumericLiteralExpression,
+                                        SyntaxFactory.Literal(typeId)))))));
+        }
+
+        private static List<ClassDeclarationSyntax> SerializeNonCollection(Type type, int typeId)
+        {
+            var classes = new List<ClassDeclarationSyntax>();
             var classCount = 2;
             var mainClass = type.GetSerializerTask(type.GetSerializerTaskName());
             var serializerMethod = mainClass.GetSerializerMethod();
-            serializerMethod = serializerMethod.AddBodyStatements(SyntaxFactory.ExpressionStatement(
-                                            SyntaxFactory.InvocationExpression(
-                                                SyntaxFactory.MemberAccessExpression(
-                                                    SyntaxKind.SimpleMemberAccessExpression,
-                                                    SyntaxFactory.IdentifierName(ConstantsForGeneration.BinaryWriterName),
-                                                    SyntaxFactory.IdentifierName("Write")))
-                                            .WithArgumentList(
-                                                SyntaxFactory.ArgumentList(
-                                                    SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
-                                                        SyntaxFactory.Argument(
-                                                            SyntaxFactory.LiteralExpression(
-                                                                SyntaxKind.NumericLiteralExpression,
-                                                                SyntaxFactory.Literal(currResult.TypeId))))))));
+            serializerMethod = serializerMethod.AddBodyStatements(GetTypeIdSerialization(typeId));
             mainClass = mainClass.ReplaceNode(mainClass.GetSerializerMethod(), serializerMethod);
             classes.Add(mainClass);
 
@@ -216,53 +294,32 @@ namespace ParallelSerializer.Generator
                 currClass = currClass.ReplaceNode(currClass.GetSetupChildTasksMethod(), setupMethod);
                 classes[curr] = currClass;
             }
-
-            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes);
-
-            var dispatcher =
-                SerializerState.Compilation.SyntaxTrees.SingleOrDefault(
-                    x =>
-                        x.GetRoot()
-                            .DescendantNodes()
-                            .OfType<ClassDeclarationSyntax>()
-                            .Any(c => c.Identifier.ToString() == ConstantsForGeneration.DispatcherClassName));
-
-            if (dispatcher != null)
-            {
-                SerializerState.Compilation = SerializerState.Compilation.RemoveSyntaxTrees(dispatcher);
-            }
-
-            SerializerState.Compilation =
-                SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher().SyntaxTree);
-            SerializerState.Compilation = SerializerState.Compilation.AddSyntaxTrees(compUnit.SyntaxTree);
-
-            foreach (var assemblyLocation in SerializerState.TaskDictionary.GetAssemblyLocations()
-                .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
-            {
-                if (!SerializerState.References.Contains(assemblyLocation))
-                {
-                    SerializerState.References.Add(assemblyLocation);
-                    SerializerState.Compilation =
-                        SerializerState.Compilation.AddReferences(MetadataReference.CreateFromFile(assemblyLocation));
-                }
-            }
-
-            Emit();
-            currResult.AutoResetEvent.Set();
+            return classes;
         }
 
-        public static void Emit()
+        internal static void Emit()
         {
             using (var ms = new MemoryStream())
-            using (var fs = new FileStream("output.dll", FileMode.Create))
             {
                 var result = SerializerState.Compilation.Emit(ms);
+                if (!result.Success)
+                {
+                    throw new InvalidOperationException("A fordítás nem sikerült!");
+                }
                 ms.Position = 0;
-                ms.CopyTo(fs);
                 SerializerState.GeneratedAssembly = Assembly.Load(ms.ToArray());
-                SerializerState.GeneratedAssembly.GetType(ConstantsForGeneration.TaskNamespace + "." + ConstantsForGeneration.DispatcherClassName)
+                SerializerState.GeneratedAssembly.GetType(ConstantsForGeneration.TaskNamespace + "." +
+                                                          ConstantsForGeneration.DispatcherClassName)
                     .GetMethod(ConstantsForGeneration.SetupFactoryMethodName)
                     .Invoke(null, new object[0]);
+            }
+        }
+
+        public static void GenerateAssembly()
+        {
+            using (var fs = new FileStream("output.dll", FileMode.Create))
+            {
+                var result = SerializerState.Compilation.Emit(fs);
                 if (!result.Success)
                 {
                     throw new InvalidOperationException("A fordítás nem sikerült!");

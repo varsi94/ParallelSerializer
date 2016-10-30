@@ -43,7 +43,8 @@ namespace ParallelSerializer.Generator
                 );
             return taskClass.ReplaceNode(serializeMethod, newSerializerMethod);
         }
-        public static CompilationUnitSyntax GenerateDispatcher()
+
+        internal static CompilationUnitSyntax GenerateDispatcher()
         {
             var dispatcher = typeof(object).GetSerializerTask(ConstantsForGeneration.DispatcherClassName);
             dispatcher = AddNullChecking(dispatcher);
@@ -53,7 +54,7 @@ namespace ParallelSerializer.Generator
             foreach (var type in SerializerState.TaskDictionary.Where(x => x.Key != typeof(object)).Select(x => x.Key))
             {
                 var argument = SyntaxFactory.Argument(SyntaxFactory.CastExpression(
-                    SyntaxFactory.IdentifierName(type.GetFullCorrectTypeName()),
+                    SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName()),
                     SyntaxFactory.IdentifierName("Object")));
                 var block = TaskGenerator.AddTaskCreation(type.GetSerializerTaskName(), argument);
                 var ifStatement = SyntaxFactory.IfStatement(
@@ -65,7 +66,7 @@ namespace ParallelSerializer.Generator
                                 SyntaxFactory.IdentifierName("Object"),
                                 SyntaxFactory.IdentifierName("GetType"))),
                         SyntaxFactory.TypeOfExpression(
-                            SyntaxFactory.IdentifierName(type.GetFullCorrectTypeName()))),
+                            SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName()))),
                     SyntaxFactory.Block(new[] {block, SyntaxFactory.ReturnStatement()}));
                 setupMethod = setupMethod.AddBodyStatements(ifStatement);
             }
@@ -128,7 +129,7 @@ namespace ParallelSerializer.Generator
             return TaskGenerator.CreateCompilationUnitFromClasses(new[] { dispatcher });
         }
 
-        public static void Initialize()
+        internal static void Initialize()
         {
             SerializerState.Compilation = CSharpCompilation.Create("SerializerAssembly",
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))

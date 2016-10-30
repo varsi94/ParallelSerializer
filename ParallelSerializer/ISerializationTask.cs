@@ -12,11 +12,5 @@ namespace ParallelSerializer
         TaskId Id { get; }
 
         void SerializeObject(object state);
-
-        AutoResetEvent WaitHandle { get; set; }
-
-        void DisposeHandles();
-
-        List<ISerializationTask> SubTasks { get; }
     }
 }

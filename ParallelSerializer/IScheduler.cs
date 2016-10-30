@@ -10,7 +10,5 @@ namespace ParallelSerializer
     public interface IScheduler
     {
         void QueueWorkItem(ISerializationTask task);
-
-        void WaitAllSubTasks(ISerializationTask task);
     }
 }
