@@ -29,7 +29,7 @@ namespace ParallelSerializer.Tests
             {
                 var input = new Category {Name = "asd", ID = 5};
                 serializer.Serialize(input, ms);
-                ms.Position = 0;
+                Utility.ConsoleWriter(ms);
                 var result = (Category) serializer.Deserialize(ms);
                 Assert.AreNotSame(input, result);
                 Assert.AreEqual(input.Name, result.Name);
@@ -41,7 +41,7 @@ namespace ParallelSerializer.Tests
             {
                 string x = "asd";
                 serializer.Serialize(x, ms);
-                ms.Position = 0;
+                Utility.ConsoleWriter(ms);
                 var result = (string) serializer.Deserialize(ms);
                 Assert.AreEqual(x, result);
             }
@@ -56,12 +56,13 @@ namespace ParallelSerializer.Tests
                 {
                     Name = "asd",
                     ID = 5,
-                    Products = Enumerable.Range(1, 100).Select(x => new Product {Name = "asd" + x, ID = 2, Count = x}).ToList()
+                    Products = Enumerable.Range(1, 5).Select(x => new Product {Name = "asd" + x, ID = 2, Count = x}).ToList()
                 };
                 serializer.Serialize(input, ms);
                 ms.Position = 0;
                 TaskGenerator.GenerateAssembly();
-                var result = (Category) serializer.Deserialize(ms);
+                Utility.ConsoleWriter(ms);
+                Category result = (Category) serializer.Deserialize(ms);
                 Assert.AreNotSame(input, result);
                 Assert.AreEqual(input.Name, result.Name);
                 Assert.AreEqual(input.ID, result.ID);
@@ -80,9 +81,9 @@ namespace ParallelSerializer.Tests
         {
             using (var ms = new MemoryStream())
             {
-                var list = Enumerable.Range(1, 100).Select(x => new Product {Name = "asd", ID = x, Count = 1}).ToList();
+                var list = Enumerable.Range(1, 5).Select(x => new Product {Name = "asd", ID = x, Count = 1}).ToList();
                 serializer.Serialize(list, ms);
-                ms.Position = 0;
+                Utility.ConsoleWriter(ms);
                 var result = (List<Product>)serializer.Deserialize(ms);
                 Assert.AreNotSame(list, result);
                 Assert.AreEqual(list.Count, result.Count);
@@ -100,10 +101,10 @@ namespace ParallelSerializer.Tests
         {
             using (var ms = new MemoryStream())
             {
-                var dict = Enumerable.Range(1, 100)
+                var dict = Enumerable.Range(1, 5)
                     .ToDictionary(x => x, x => new Product {Name = "asd", ID = x, Count = 1});
                 serializer.Serialize(dict, ms);
-                ms.Position = 0;
+                Utility.ConsoleWriter(ms);
                 var result = (Dictionary<int, Product>)serializer.Deserialize(ms);
                 Assert.AreNotSame(dict, result);
                 Assert.AreEqual(dict.Count, result.Count);
@@ -127,7 +128,7 @@ namespace ParallelSerializer.Tests
                     Products = new List<Product> {new ProductExt {Name = "asd2", AddedProp = "dummy"}}
                 };
                 serializer.Serialize(category, ms);
-                ms.Position = 0;
+                Utility.ConsoleWriter(ms);
                 Category result = (Category) serializer.Deserialize(ms);
                 Assert.AreNotSame(category.Products.First(), result.Products.First());
                 Assert.AreEqual(true, category.Products.First() is ProductExt);

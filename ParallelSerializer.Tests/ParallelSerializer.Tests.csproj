@@ -139,6 +139,7 @@
     <Compile Include="ModelExt\ProductExt.cs" />
     <Compile Include="ParallelSerializerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DemoModel\DemoModel.csproj">
