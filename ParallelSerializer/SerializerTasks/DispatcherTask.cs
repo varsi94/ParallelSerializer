@@ -75,9 +75,9 @@ namespace ParallelSerializer.SerializerTasks
 				return;
 			}
 
-			if (type == typeof(byte))
+			if (type == typeof(decimal))
 			{
-				binaryWriter.Write((byte)Object);
+				binaryWriter.Write((decimal)Object);
 				return;
 			}
 

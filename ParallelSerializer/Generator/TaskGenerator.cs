@@ -139,7 +139,7 @@ namespace ParallelSerializer.Generator
                                                                                     "SubTaskCount")))))))))))))));
         }
 
-        public static void GenerateTasksForClass(Type type)
+        internal static void GenerateTasksForClass(Type type)
         {
             SerializerState.KnownTypesSerialize.Add(type);
             int typeId = SerializerState.KnownTypesSerialize.IndexOf(type);
@@ -176,7 +176,7 @@ namespace ParallelSerializer.Generator
 
         internal static void RefreshReferences()
         {
-            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.Select(x => x.Assembly.Location)
+            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.SelectMany(x => x.GenericTypeArguments.Select(y => y.Assembly.Location).Union(new [] {x.Assembly.Location}))
                 .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
             {
                 if (!SerializerState.References.Contains(assemblyLocation))
@@ -190,32 +190,59 @@ namespace ParallelSerializer.Generator
 
         private static List<ClassDeclarationSyntax> SerializeCollection(Type type, int typeId, bool isDictionary)
         {
-            if (isDictionary)
-            {
-                throw new NotImplementedException();
-            }
             var classes = new List<ClassDeclarationSyntax>();
             var mainClass = type.GetSerializerTask(type.GetSerializerTaskName());
             StatementSyntax statement = null;
             var serializeMethod = mainClass.GetSerializerMethod();
             var setupMethod = mainClass.GetSetupChildTasksMethod();
+            ExpressionSyntax identifier = (isDictionary)
+                ? (ExpressionSyntax) SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.IdentifierName("Object"),
+                    SyntaxFactory.IdentifierName("Keys"))
+                : (ExpressionSyntax) SyntaxFactory.IdentifierName("Object");
             var foreachStatement = SyntaxFactory.ForEachStatement(
                 SyntaxFactory.ParseTypeName(type.GenericTypeArguments[0].GetFullCorrectTypeName()),
                 SyntaxFactory.Identifier("item"),
-                SyntaxFactory.IdentifierName("Object"),
+                identifier,
                 SyntaxFactory.Block());
             var countStatement = SerializeAtomicType(new SerializableMember { Name = "Count", Type = typeof(int) });
             serializeMethod = serializeMethod.AddBodyStatements(GetTypeIdSerialization(typeId));
             serializeMethod = serializeMethod.AddBodyStatements(countStatement);
-            if (type.GenericTypeArguments[0].IsAtomic())
+            if (!isDictionary)
             {
-                statement = SerializeAtomicType(SyntaxFactory.IdentifierName("item"), type.GenericTypeArguments[0]);
+                if (type.GenericTypeArguments[0].IsAtomic())
+                {
+                    statement = AddTaskCreation(type.GenericTypeArguments[0].GetSerializerTaskName(),
+                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
+                }
+                else
+                {
+                    statement = AddTaskCreation(ConstantsForGeneration.LazyDispatcherClassName,
+                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
+                }
                 foreachStatement = foreachStatement.WithStatement(statement);
-                serializeMethod = serializeMethod.AddBodyStatements(foreachStatement);
+                setupMethod = setupMethod.AddBodyStatements(foreachStatement);
             }
             else
             {
-                statement = AddTaskCreation(ConstantsForGeneration.LazyDispatcherClassName, SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item")));
+                string keyTaskName = type.GenericTypeArguments[0].IsAtomic()
+                    ? type.GenericTypeArguments[0].GetSerializerTaskName()
+                    : ConstantsForGeneration.LazyDispatcherClassName;
+                string valueTaskName = type.GenericTypeArguments[1].IsAtomic()
+                    ? type.GenericTypeArguments[1].GetSerializerTaskName()
+                    : ConstantsForGeneration.LazyDispatcherClassName;
+                statement =
+                    SyntaxFactory.Block(AddTaskCreation(keyTaskName,
+                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName("item"))),
+                        AddTaskCreation(valueTaskName, SyntaxFactory.Argument(SyntaxFactory.ElementAccessExpression(
+                            SyntaxFactory.IdentifierName("Object"))
+                            .WithArgumentList(
+                                SyntaxFactory.BracketedArgumentList(
+                                    SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.IdentifierName("item")))))
+                            )));
                 foreachStatement = foreachStatement.WithStatement(statement);
                 setupMethod = setupMethod.AddBodyStatements(foreachStatement);
             }
@@ -325,7 +352,8 @@ namespace ParallelSerializer.Generator
                 SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(ConstantsForGeneration.TaskNamespace));
             nameSpace = nameSpace.AddMembers(classes.ToArray());
             var compUnit = SyntaxFactory.CompilationUnit().AddMembers(nameSpace);
-            foreach (var ns in SerializerState.KnownTypesSerialize.Select(x => x.Namespace).Union(new[]
+            foreach (var ns in SerializerState.KnownTypesSerialize
+                .SelectMany(x => x.GenericTypeArguments.Select(y => y.Namespace).Union(new[] {x.Namespace})).Union(new[]
             {
                 typeof(object).Namespace, typeof(ISerializationTask).Namespace, typeof(SmartBinaryWriter).Namespace,
                 typeof(TaskGenerator).Namespace, typeof(KeyValuePair<,>).Namespace

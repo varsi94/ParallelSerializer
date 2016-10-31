@@ -34,7 +34,7 @@ namespace ParallelSerializer.SerializerTasks
 			var type = Object.GetType();
 <#
 			List<string> types = new List<string> { "string", "int", "long", "short",
-            "bool", "double", "byte", "char", "byte", "sbyte", "float",
+            "bool", "double", "byte", "char", "decimal", "sbyte", "float",
             "uint", "ulong", "ushort", "DateTime" };
 			foreach (var type in types) 
 			{

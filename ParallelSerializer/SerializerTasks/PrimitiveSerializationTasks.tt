@@ -1,0 +1,65 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using DynamicSerializer.Core;
+using ParallelSerializer.Generator;
+
+namespace ParallelSerializer.SerializerTasks
+{
+<#
+	List<Type> types = new List<Type> { typeof(string), typeof(int), typeof(long), typeof(short),
+    typeof(bool), typeof(double), typeof(byte), typeof(char), typeof(decimal), typeof(sbyte), typeof(float),
+    typeof(uint), typeof(ulong), typeof(ushort), typeof(DateTime) };
+	foreach (var type in types)
+	{
+		string name = $"{type.Name}SerializationTask";
+#>
+	public class <#=name#> : SerializationTask<<#=type.Name#>>
+    {
+        public <#=name#>(<#=type.Name#> obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
+        {
+        }
+
+        protected override void Serialize(SmartBinaryWriter binaryWriter)
+        {
+<#
+			if (type == typeof(string))
+			{
+#>
+			if (Object == null)
+			{
+				binaryWriter.Write(-1);
+			}
+			else
+			{
+				binaryWriter.Write(0);
+				binaryWriter.Write(Object);
+			}
+<#
+			}
+			else
+			{
+#>
+			binaryWriter.Write(Object);
+<#
+			}
+#>
+        }
+
+        protected override void SetupChildTasks()
+        {
+        }
+    }
+
+<#
+	}
+#>
+}

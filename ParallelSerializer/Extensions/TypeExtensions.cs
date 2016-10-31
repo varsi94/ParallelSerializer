@@ -115,12 +115,17 @@ namespace ParallelSerializer.Extensions
 
         public static string GetSerializerTaskName(this Type t, int? id = null)
         {
+            if (t.IsAtomic())
+            {
+                return $"{t.Name}SerializationTask";
+            }
+
             string typeName = t.Namespace.Replace(".", "") + t.GetNameFriendlyTypeName();
             if (id.HasValue)
             {
-                return $"{typeName}{id.Value}SerializerTask";
+                return $"{typeName}{id.Value}SerializationTask";
             }
-            return $"{typeName}SerializerTask";
+            return $"{typeName}SerializationTask";
         }
 
         private static string GetNameFriendlyTypeName(this Type t)
@@ -139,6 +144,11 @@ namespace ParallelSerializer.Extensions
             {
                 return t.GetCorrectTypeName();
             }
+        }
+
+        public static string GetPrimitiveSerializationTaskName(this string typeName)
+        {
+            return $"{char.ToUpper(typeName.First())}{typeName.Substring(1)}SerializationTask";
         }
     }
 }

@@ -146,6 +146,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>DispatcherTask.tt</DependentUpon>
     </Compile>
+    <Compile Include="SerializerTasks\PrimitiveSerializationTasks.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>PrimitiveSerializationTasks.tt</DependentUpon>
+    </Compile>
     <Compile Include="TaskId.cs" />
     <Compile Include="TplScheduler.cs" />
   </ItemGroup>
@@ -167,6 +172,10 @@
     <Content Include="SerializerTasks\DispatcherTask.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>DispatcherTask.cs</LastGenOutput>
+    </Content>
+    <Content Include="SerializerTasks\PrimitiveSerializationTasks.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PrimitiveSerializationTasks.cs</LastGenOutput>
     </Content>
   </ItemGroup>
   <ItemGroup>
