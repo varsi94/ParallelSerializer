@@ -120,12 +120,13 @@ namespace ParallelSerializer.SerializerTasks
 
         protected override void SetupChildTasks()
         {
-            if (!SerializerState.KnownTypesSerialize.Contains(Object.GetType()))
-            {
-                var customDispatcher = new LazyDispatcherTask(Object, SerializationContext, Scheduler);
+			int index = SerializerState.KnownTypesSerialize.IndexOf(Object.GetType());
+			if (index == -1 || index >= 15) 
+			{
+				var customDispatcher = new LazyDispatcherTask(Object, SerializationContext, Scheduler);
 				customDispatcher.Id = Id.CreateChild(++SubTaskCount);
 				SubTasks.Add(customDispatcher);
-            }
+			}
         }
     }
 }

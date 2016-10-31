@@ -33,7 +33,7 @@ namespace ParallelSerializer
             SerializationContext.Barrier.Start();
         }
 
-        public void SerializeObject(object state)
+        public virtual void SerializeObject(object state)
         {
             try
             {
