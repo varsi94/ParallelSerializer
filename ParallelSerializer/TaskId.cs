@@ -24,18 +24,7 @@ namespace ParallelSerializer
 
             if (a == b)
             {
-                if (i >= list.Count && i < other.list.Count)
-                {
-                    return -1;
-                }
-                else if (i >= other.list.Count && i < list.Count)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
+                return list.Count.CompareTo(other.list.Count);
             }
             else
             {

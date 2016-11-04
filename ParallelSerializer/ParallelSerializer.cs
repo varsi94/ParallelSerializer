@@ -35,7 +35,6 @@ namespace ParallelSerializer
 
                 var task = new DispatcherTask(obj, context, scheduler)
                 {
-                    Object = obj,
                     Id = TaskId.CreateDefault()
                 };
                 scheduler.QueueWorkItem(task);

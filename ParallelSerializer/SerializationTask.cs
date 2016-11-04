@@ -15,11 +15,11 @@ namespace ParallelSerializer
     {
         protected int SubTaskCount { get; set; } = 0;
 
-        public List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
+        protected List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
 
         protected IScheduler Scheduler { get; }
 
-        public T Object { get; set; }
+        protected T Object { get; set; }
 
         public TaskId Id { get; set; }
 
@@ -45,12 +45,16 @@ namespace ParallelSerializer
                         Scheduler.QueueWorkItem(task);
                     }
                 }
-
+                
                 using (var ms = new MemoryStream())
                 using (var bw = new SmartBinaryWriter(ms))
                 {
                     Serialize(bw);
-                    SerializationContext.Results.TryAdd(Id, ms.ToArray());
+                    var result = ms.ToArray();
+                    if (result.Length > 0)
+                    {
+                        SerializationContext.Results.AddAtomic(Id, ms.ToArray());
+                    }
                 }
             }
             finally

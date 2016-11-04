@@ -56,7 +56,7 @@ namespace ParallelSerializer.Tests
                 {
                     Name = "asd",
                     ID = 5,
-                    Products = Enumerable.Range(1, 5).Select(x => new Product {Name = "asd" + x, ID = 2, Count = x}).ToList()
+                    Products = Enumerable.Range(1, 100).Select(x => new Product {Name = "asd" + x, ID = 2, Count = x}).ToList()
                 };
                 serializer.Serialize(input, ms);
                 ms.Position = 0;
