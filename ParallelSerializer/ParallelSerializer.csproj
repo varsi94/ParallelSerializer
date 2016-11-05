@@ -139,7 +139,6 @@
     <Compile Include="ParallelSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializationContext.cs" />
-    <Compile Include="SerializationResults.cs" />
     <Compile Include="SerializationTask.cs" />
     <Compile Include="SerializerTasks\DispatcherTask.cs">
       <AutoGen>True</AutoGen>

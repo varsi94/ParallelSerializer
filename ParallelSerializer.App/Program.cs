@@ -1,5 +1,6 @@
 ﻿using DemoModel;
 using DynamicSerializer.Roslyn;
+using ParallelSerializer.App.Wrappers;
 using ParallelSerializer.Generator;
 using System;
 using System.Collections.Generic;
@@ -15,27 +16,44 @@ namespace ParallelSerializer.App
     {
         static void Main(string[] args)
         {
-            var parallelSerializer = new ParallelSerializer(new TplScheduler());
-            var category = new Category
+            var obj1 = new Category
             {
-                Name = "asd",
-                Products = Enumerable.Range(1, 5).Select(x => new Product {ID = x}).ToList()
+                Products =
+                    Enumerable.Range(1, 100).Select(x => new Product {Name = "asd" + x, Count = 5, ID = x}).ToList(),
+                Name = "dummyCategory",
+                ID = 5
             };
-            using (var ms = new MemoryStream())
+
+            List<ISerializerWrapper> wrappers = new List<ISerializerWrapper>
             {
-                parallelSerializer.Serialize(category, ms);
+                new RoslynDynamicSerializerWrapper(),
+                new ParallelSerializerWrapper()
+            };
+
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine("Serialization: " + i);
+                foreach (var serializerWrapper in wrappers)
+                {
+                    Console.WriteLine("Serializer: " + serializerWrapper.GetType().Name);
+                    using (var ms = new MemoryStream())
+                    {
+                        serializerWrapper.Serialize(obj1, ms);
+                        ms.Position = 0;
+                        serializerWrapper.Deserialize(ms);
+                    }
+                }
                 TaskGenerator.GenerateAssembly();
-                ms.Position = 0;
-                var result = parallelSerializer.Deserialize(ms);
             }
 
-            using (var ms = new MemoryStream())
+            foreach (var serializerWrapper in wrappers)
             {
-                parallelSerializer.Serialize(category, ms);
-                TaskGenerator.GenerateAssembly();
-                ms.Position = 0;
-                var result = parallelSerializer.Deserialize(ms);
+                Console.WriteLine("Serializer: " + serializerWrapper.GetType().Name);
+                Console.WriteLine("Min: " + serializerWrapper.MeasurementResults.Min(x => x.TotalMilliseconds) + " ms");
+                Console.WriteLine("Average: " + serializerWrapper.MeasurementResults.Average(x => x.TotalMilliseconds) + " ms");
+                Console.WriteLine("Max: " + serializerWrapper.MeasurementResults.Max(x => x.TotalMilliseconds) + " ms");
             }
+            Console.ReadLine();
         }
     }
 }

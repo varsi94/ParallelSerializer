@@ -9,6 +9,8 @@ namespace ParallelSerializer.SerializerTasks
 {
     public class LazyDispatcherTask : ISerializationTask
     {
+        private object syncRoot = new object();
+
         protected object Object { get; }
 
         protected SerializationContext SerializationContext { get; }
@@ -38,12 +40,12 @@ namespace ParallelSerializer.SerializerTasks
                     GenerateNewClassTasks();
                 }
                 var dispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
-                dispatcher.Id = Id;
+                dispatcher.Id = Id.Clone();
                 Scheduler.QueueWorkItem(dispatcher);
             }
             finally
             {
-                SerializationContext.Barrier.Stop();
+                SerializationContext.StopTask(this);
             }
         }
 
@@ -53,7 +55,7 @@ namespace ParallelSerializer.SerializerTasks
             SerializationContext = context;
             Scheduler = scheduler;
 
-            SerializationContext.Barrier.Start();
+            SerializationContext.StartTask(this);
         }
     }
 }

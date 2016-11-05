@@ -28,17 +28,14 @@ namespace ParallelSerializer
             using (var outputWriter = new SmartBinaryWriter(ms))
             using (var barrier = new Barrier())
             {
-                var context = new SerializationContext()
-                {
-                    Barrier = barrier
-                };
+                var context = new SerializationContext();
 
                 var task = new DispatcherTask(obj, context, scheduler)
                 {
                     Id = TaskId.CreateDefault()
                 };
                 scheduler.QueueWorkItem(task);
-                context.Barrier.WaitForAll();
+                context.WaitForAllTasks();
 
                 outputWriter.Write(SerializerState.KnownTypesSerialize.Count - 15);
                 foreach (var newType in SerializerState.KnownTypesSerialize.Skip(15))
@@ -50,7 +47,7 @@ namespace ParallelSerializer
                 {
                     outputWriter.Write(SerializerState.KnownTypesSerialize.IndexOf(obj.GetType()));
                 }
-                outputWriter.Write(context.Results.GetJoinedResult());
+                outputWriter.Write(context.GetJoinedResult());
                 ms.Position = 0;
                 ms.CopyTo(output);
             }

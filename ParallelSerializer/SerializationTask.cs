@@ -13,6 +13,8 @@ namespace ParallelSerializer
 {
     public abstract class SerializationTask<T> : ISerializationTask
     {
+        private object syncRoot = new object();
+
         protected int SubTaskCount { get; set; } = 0;
 
         protected List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
@@ -30,7 +32,7 @@ namespace ParallelSerializer
             Object = obj;
             SerializationContext = context;
             Scheduler = scheduler;
-            SerializationContext.Barrier.Start();
+            SerializationContext.StartTask(this);
         }
 
         public virtual void SerializeObject(object state)
@@ -51,20 +53,23 @@ namespace ParallelSerializer
                 {
                     Serialize(bw);
                     var result = ms.ToArray();
-                    if (result.Length > 0)
-                    {
-                        SerializationContext.Results.AddAtomic(Id, ms.ToArray());
-                    }
+                    SerializationContext.AddSerializationResult(this, ms.ToArray());
                 }
             }
             finally
             {
-                SerializationContext.Barrier.Stop();
+                SerializationContext.StopTask(this);
             }
         }
 
         protected abstract void Serialize(SmartBinaryWriter bw);
 
         protected abstract void SetupChildTasks();
+
+        protected virtual void AddSubTask(ISerializationTask task)
+        {
+            task.Id = Id.CreateChild(++SubTaskCount);
+            SubTasks.Add(task);
+        }
     }
 }

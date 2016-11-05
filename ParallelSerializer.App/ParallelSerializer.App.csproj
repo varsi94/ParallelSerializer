@@ -49,6 +49,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ISerializerWrapper.cs" />
+    <Compile Include="Wrappers\ParallelSerializerWrapper.cs" />
+    <Compile Include="Wrappers\RoslynDynamicSerializerWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

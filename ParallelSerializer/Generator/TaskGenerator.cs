@@ -94,10 +94,7 @@ namespace ParallelSerializer.Generator
         {
             return SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        SyntaxFactory.IdentifierName("SubTasks"),
-                        SyntaxFactory.IdentifierName("Add")))
+                    SyntaxFactory.IdentifierName("AddSubTask"))
                     .WithArgumentList(
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
@@ -116,27 +113,7 @@ namespace ParallelSerializer.Generator
                                                         SyntaxFactory.Token(SyntaxKind.CommaToken),
                                                         SyntaxFactory.Argument(
                                                             SyntaxFactory.IdentifierName("Scheduler"))
-                                                    })))
-                                        .WithInitializer(
-                                            SyntaxFactory.InitializerExpression(
-                                                SyntaxKind.ObjectInitializerExpression,
-                                                SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
-                                                    SyntaxFactory.AssignmentExpression(
-                                                        SyntaxKind.SimpleAssignmentExpression,
-                                                        SyntaxFactory.IdentifierName("Id"),
-                                                        SyntaxFactory.InvocationExpression(
-                                                            SyntaxFactory.MemberAccessExpression(
-                                                                SyntaxKind.SimpleMemberAccessExpression,
-                                                                SyntaxFactory.IdentifierName("Id"),
-                                                                SyntaxFactory.IdentifierName("CreateChild")))
-                                                            .WithArgumentList(
-                                                                SyntaxFactory.ArgumentList(
-                                                                    SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>
-                                                                        (SyntaxFactory.Argument(SyntaxFactory
-                                                                            .PrefixUnaryExpression(
-                                                                                SyntaxKind.PreIncrementExpression,
-                                                                                SyntaxFactory.IdentifierName(
-                                                                                    "SubTaskCount")))))))))))))));
+                                                    }))))))));
         }
 
         internal static void GenerateTasksForClass(Type type)

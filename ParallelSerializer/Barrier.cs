@@ -9,8 +9,7 @@ namespace ParallelSerializer
 {
     public class Barrier : IDisposable
     {
-        private int counter = 0;
-        private readonly object syncRoot = new object();
+        private volatile int counter = 0;
         private readonly AutoResetEvent resetEvent = new AutoResetEvent(false);
 
         public void Start()
@@ -20,13 +19,9 @@ namespace ParallelSerializer
 
         public void Stop()
         {
-            lock (syncRoot)
+            if (Interlocked.Decrement(ref counter) == 0)
             {
-                counter--;
-                if (counter == 0)
-                {
-                    resetEvent.Set();
-                }
+                resetEvent.Set();
             }
         }
 
@@ -50,7 +45,7 @@ namespace ParallelSerializer
                 disposedValue = true;
             }
         }
-        
+
         public void Dispose()
         {
             Dispose(true);

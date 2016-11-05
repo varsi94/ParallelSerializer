@@ -123,9 +123,7 @@ namespace ParallelSerializer.SerializerTasks
 			int index = SerializerState.KnownTypesSerialize.IndexOf(Object.GetType());
 			if (index == -1 || index >= 15) 
 			{
-				var customDispatcher = new LazyDispatcherTask(Object, SerializationContext, Scheduler);
-				customDispatcher.Id = Id.CreateChild(++SubTaskCount);
-				SubTasks.Add(customDispatcher);
+				AddSubTask(new LazyDispatcherTask(Object, SerializationContext, Scheduler));
 			}
         }
     }

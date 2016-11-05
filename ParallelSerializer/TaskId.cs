@@ -8,7 +8,7 @@ namespace ParallelSerializer
 {
     public class TaskId : IComparable<TaskId>
     {
-        private readonly List<int> list;
+        private readonly IReadOnlyList<int> list;
 
         public int CompareTo(TaskId other)
         {
@@ -32,26 +32,31 @@ namespace ParallelSerializer
             }
         }
 
-        protected TaskId(List<int> list)
+        protected TaskId(IReadOnlyList<int> list)
         {
             this.list = list;
         }
 
         public static TaskId CreateDefault()
         {
-            return new TaskId(new List<int> {1});
+            return new TaskId((new List<int> { 1 }).AsReadOnly());
         }
 
         public TaskId CreateChild(int id)
         {
-            var result = new TaskId(list.ToList());
-            result.list.Add(id);
-            return result;
+            var newList = list.ToList();
+            newList.Add(id);
+            return new TaskId(newList.AsReadOnly());
         }
 
         public override string ToString()
         {
             return string.Join("_", list.Select(x => x.ToString()));
+        }
+
+        public TaskId Clone()
+        {
+            return new TaskId(list.ToList().AsReadOnly());
         }
     }
 }
