@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ParallelSerializer
 {
-    public class SerializationContext
+    public class SerializationContext : IDisposable
     {
         private readonly object syncRoot = new object();
 
@@ -65,6 +65,11 @@ namespace ParallelSerializer
                 }
                 return ms.ToArray();
             }
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)Barrier).Dispose();
         }
     }
 }

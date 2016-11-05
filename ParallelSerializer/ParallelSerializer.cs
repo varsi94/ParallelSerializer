@@ -26,10 +26,8 @@ namespace ParallelSerializer
         {
             using (var ms = new MemoryStream())
             using (var outputWriter = new SmartBinaryWriter(ms))
-            using (var barrier = new Barrier())
+            using (var context = new SerializationContext())
             {
-                var context = new SerializationContext();
-
                 var task = new DispatcherTask(obj, context, scheduler)
                 {
                     Id = TaskId.CreateDefault()
