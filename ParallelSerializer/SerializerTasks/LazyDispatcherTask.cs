@@ -40,7 +40,7 @@ namespace ParallelSerializer.SerializerTasks
                     GenerateNewClassTasks();
                 }
                 var dispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
-                dispatcher.Id = Id.Clone();
+                dispatcher.Id = Id;
                 Scheduler.QueueWorkItem(dispatcher);
             }
             finally

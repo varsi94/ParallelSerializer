@@ -53,10 +53,5 @@ namespace ParallelSerializer
         {
             return string.Join("_", list.Select(x => x.ToString()));
         }
-
-        public TaskId Clone()
-        {
-            return new TaskId(list.ToList().AsReadOnly());
-        }
     }
 }
