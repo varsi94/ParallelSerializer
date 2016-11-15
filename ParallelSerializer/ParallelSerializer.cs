@@ -28,10 +28,12 @@ namespace ParallelSerializer
             using (var outputWriter = new SmartBinaryWriter(ms))
             using (var context = new SerializationContext())
             {
-                var task = new DispatcherTask(obj, context, scheduler)
+                var task = new DispatcherTask(obj, context, scheduler);
+                context.TaskTreeRoot = new TaskTreeNode()
                 {
-                    Id = TaskId.CreateDefault()
+                    Task = task
                 };
+                task.TaskTreeNode = context.TaskTreeRoot;
                 scheduler.QueueWorkItem(task);
                 context.WaitForAllTasks();
 

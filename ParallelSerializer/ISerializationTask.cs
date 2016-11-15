@@ -9,8 +9,10 @@ namespace ParallelSerializer
 {
     public interface ISerializationTask
     {
-        TaskId Id { get; set; }
-
         void SerializeObject(object state);
+
+        byte[] SerializationResult { get; set; }
+
+        TaskTreeNode TaskTreeNode { get; set; }
     }
 }

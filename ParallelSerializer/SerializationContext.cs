@@ -11,10 +11,9 @@ namespace ParallelSerializer
     public class SerializationContext : IDisposable
     {
         private readonly object syncRoot = new object();
-
         private bool finished = false;
 
-        private SortedDictionary<TaskId, byte[]> Results { get; } = new SortedDictionary<TaskId, byte[]>();
+        public TaskTreeNode TaskTreeRoot { get; set; }
 
         private Barrier Barrier { get; } = new Barrier();
 
@@ -34,37 +33,36 @@ namespace ParallelSerializer
             finished = true;
         }
 
-        public void AddSerializationResult(ISerializationTask task, byte[] result)
-        {
-            if (finished)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (result.Length > 0)
-            {
-                lock (syncRoot)
-                {
-                    Results.Add(task.Id, result);
-                }
-            }
-        }
-
         /// <summary>
         /// Joins the byte outputs in the order of the keys. NOTE: This method is not thread-safe!
         /// </summary>
         /// <returns>The joined byte array.</returns>
         public byte[] GetJoinedResult()
         {
-            using (var ms = new MemoryStream())
-            using (var bw = new BinaryWriter(ms))
+            if (!finished)
             {
-                foreach (var source in Results)
-                {
-                    bw.Write(source.Value);
-                }
-                return ms.ToArray();
+                throw new InvalidOperationException();
             }
+
+            var result = new byte[TaskTreeRoot.GetLength()];
+            AddToBuffer(TaskTreeRoot, result, 0);
+            return result;
+        }
+
+        private int AddToBuffer(TaskTreeNode treeNode, byte[] buffer, int offset)
+        {
+            int len = 0;
+            if (treeNode.Task.SerializationResult != null && treeNode.Task.SerializationResult.Length > 0)
+            {
+                treeNode.Task.SerializationResult.CopyTo(buffer, offset);
+                len += treeNode.Task.SerializationResult.Length;
+            }
+            
+            foreach (var subTask in treeNode.Children)
+            {
+                len += AddToBuffer(subTask, buffer, offset + len);
+            }
+            return len;
         }
 
         public void Dispose()

@@ -17,7 +17,9 @@ namespace ParallelSerializer.SerializerTasks
 
         protected IScheduler Scheduler { get; }
 
-        public TaskId Id { get; set; }
+        public byte[] SerializationResult { get; set; }
+
+        public TaskTreeNode TaskTreeNode { get; set; }
 
         private void GenerateNewClassTasks()
         {
@@ -40,7 +42,8 @@ namespace ParallelSerializer.SerializerTasks
                     GenerateNewClassTasks();
                 }
                 var dispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
-                dispatcher.Id = Id;
+                dispatcher.TaskTreeNode = new TaskTreeNode() {Task = dispatcher};
+                TaskTreeNode.Children.Add(dispatcher.TaskTreeNode);
                 Scheduler.QueueWorkItem(dispatcher);
             }
             finally

@@ -23,9 +23,11 @@ namespace ParallelSerializer
 
         protected T Object { get; set; }
 
-        public TaskId Id { get; set; }
-
         protected SerializationContext SerializationContext { get; }
+
+        public byte[] SerializationResult { get; set; }
+
+        public TaskTreeNode TaskTreeNode { get; set; }
 
         public SerializationTask(T obj, SerializationContext context, IScheduler scheduler)
         {
@@ -52,8 +54,7 @@ namespace ParallelSerializer
                 using (var bw = new SmartBinaryWriter(ms))
                 {
                     Serialize(bw);
-                    var result = ms.ToArray();
-                    SerializationContext.AddSerializationResult(this, ms.ToArray());
+                    SerializationResult = ms.ToArray();
                 }
             }
             finally
@@ -68,8 +69,13 @@ namespace ParallelSerializer
 
         protected virtual void AddSubTask(ISerializationTask task)
         {
-            task.Id = Id.CreateChild(++SubTaskCount);
-            SubTasks.Add(task);
+            lock (TaskTreeNode.SyncRoot)
+            {
+                var child = new TaskTreeNode { Task = task };
+                TaskTreeNode.Children.Add(child);
+                task.TaskTreeNode = child;
+                SubTasks.Add(task);
+            }
         }
     }
 }
