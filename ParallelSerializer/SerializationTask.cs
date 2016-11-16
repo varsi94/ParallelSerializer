@@ -17,15 +17,13 @@ namespace ParallelSerializer
 
         protected int SubTaskCount { get; set; } = 0;
 
-        protected List<ISerializationTask> SubTasks { get; } = new List<ISerializationTask>();
-
         protected IScheduler Scheduler { get; }
 
         protected T Object { get; set; }
 
         protected SerializationContext SerializationContext { get; }
 
-        public byte[] SerializationResult { get; set; }
+        public byte[] SerializationResult { get; protected set; }
 
         public TaskTreeNode TaskTreeNode { get; set; }
 
@@ -44,12 +42,12 @@ namespace ParallelSerializer
                 if (Object != null)
                 {
                     SetupChildTasks();
-                    foreach (var task in SubTasks)
+                    foreach (var task in TaskTreeNode.Children.Select(x => x.Task))
                     {
                         Scheduler.QueueWorkItem(task);
                     }
                 }
-                
+
                 using (var ms = new MemoryStream())
                 using (var bw = new SmartBinaryWriter(ms))
                 {
@@ -69,13 +67,9 @@ namespace ParallelSerializer
 
         protected virtual void AddSubTask(ISerializationTask task)
         {
-            lock (TaskTreeNode.SyncRoot)
-            {
-                var child = new TaskTreeNode { Task = task };
-                TaskTreeNode.Children.Add(child);
-                task.TaskTreeNode = child;
-                SubTasks.Add(task);
-            }
+            var child = new TaskTreeNode { Task = task };
+            TaskTreeNode.Children.Add(child);
+            task.TaskTreeNode = child;
         }
     }
 }

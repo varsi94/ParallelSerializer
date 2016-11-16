@@ -11,7 +11,7 @@ namespace ParallelSerializer
     {
         void SerializeObject(object state);
 
-        byte[] SerializationResult { get; set; }
+        byte[] SerializationResult { get; }
 
         TaskTreeNode TaskTreeNode { get; set; }
     }
