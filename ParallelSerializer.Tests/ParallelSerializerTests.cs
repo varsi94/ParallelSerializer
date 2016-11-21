@@ -60,7 +60,6 @@ namespace ParallelSerializer.Tests
                 };
                 serializer.Serialize(input, ms);
                 ms.Position = 0;
-                TaskGenerator.GenerateAssembly();
                 Utility.ConsoleWriter(ms);
                 Category result = (Category) serializer.Deserialize(ms);
                 Assert.AreNotSame(input, result);
