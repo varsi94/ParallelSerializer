@@ -54,13 +54,13 @@ namespace ParallelSerializer
             int len = 0;
             if (treeNode.Task.SerializationResult != null && treeNode.Task.SerializationResult.Length > 0)
             {
-                treeNode.Task.SerializationResult.CopyTo(buffer, offset);
+                treeNode.Task.SerializationResult.CopyTo(buffer, offset); // Esetleg Buffer.BlockCopy()?                
                 len += treeNode.Task.SerializationResult.Length;
             }
             
             foreach (var subTask in treeNode.Children)
             {
-                len += AddToBuffer(subTask, buffer, offset + len);
+                len += AddToBuffer(subTask, buffer, offset + len); //NOTE perf: ez így nem tail-recursion szerintem, érdemes megnézni, hogy át tudod-e írni iteratívra
             }
             return len;
         }
