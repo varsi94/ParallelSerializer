@@ -45,24 +45,42 @@ namespace ParallelSerializer
             }
 
             var result = new byte[TaskTreeRoot.GetLength()];
-            AddToBuffer(TaskTreeRoot, result, 0);
-            return result;
-        }
+            int offset = 0;
+            TaskTreeNode currentNode = TaskTreeRoot;
+            while (currentNode != null)
+            {
+                if (currentNode.Task.SerializationResult != null && currentNode.Task.SerializationResult.Length != 0)
+                {
+                    Buffer.BlockCopy(currentNode.Task.SerializationResult, 0, result, offset,
+                        currentNode.Task.SerializationResult.Length);
+                    offset += currentNode.Task.SerializationResult.Length;
+                }
 
-        private int AddToBuffer(TaskTreeNode treeNode, byte[] buffer, int offset)
-        {
-            int len = 0;
-            if (treeNode.Task.SerializationResult != null && treeNode.Task.SerializationResult.Length > 0)
-            {
-                treeNode.Task.SerializationResult.CopyTo(buffer, offset); // Esetleg Buffer.BlockCopy()?                
-                len += treeNode.Task.SerializationResult.Length;
+                var firstChild = currentNode.Children.FirstOrDefault();
+                if (firstChild != null)
+                {
+                    currentNode = firstChild;
+                    continue;
+                }
+
+                if (currentNode.NextSibling != null)
+                {
+                    currentNode = currentNode.NextSibling;
+                    continue;
+                }
+
+                while (currentNode != TaskTreeRoot && currentNode.NextSibling == null)
+                {
+                    currentNode = currentNode.Parent;
+                }
+
+                if (currentNode == TaskTreeRoot)
+                {
+                    break;
+                }
+                currentNode = currentNode.NextSibling;
             }
-            
-            foreach (var subTask in treeNode.Children)
-            {
-                len += AddToBuffer(subTask, buffer, offset + len); //NOTE perf: ez így nem tail-recursion szerintem, érdemes megnézni, hogy át tudod-e írni iteratívra
-            }
-            return len;
+            return result;
         }
 
         public void Dispose()

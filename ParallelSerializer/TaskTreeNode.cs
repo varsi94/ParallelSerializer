@@ -14,6 +14,10 @@ namespace ParallelSerializer
 
         public ISerializationTask Task { get; set; }
 
+        public TaskTreeNode NextSibling { get; set; }
+
+        public TaskTreeNode Parent { get; set; }
+
         public TaskTreeNode()
         {
             Children = new List<TaskTreeNode>();

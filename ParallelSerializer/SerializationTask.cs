@@ -11,31 +11,16 @@ using System.Threading.Tasks;
 
 namespace ParallelSerializer
 {
-    public abstract class SerializationTask<T> : ISerializationTask
+    public abstract class SerializationTask<T> : TaskBase<T>, ISerializationTask
     {
         private object syncRoot = new object();
 
-        protected int SubTaskCount { get; set; } = 0;
-
-        protected IScheduler Scheduler { get; }
-
-        protected T Object { get; set; }
-
-        protected SerializationContext SerializationContext { get; }
-
-        public byte[] SerializationResult { get; protected set; }
-
-        public TaskTreeNode TaskTreeNode { get; set; }
-
-        public SerializationTask(T obj, SerializationContext context, IScheduler scheduler)
+        public SerializationTask(T obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
         {
-            Object = obj;
-            SerializationContext = context;
-            Scheduler = scheduler;
-            SerializationContext.StartTask(this);
+
         }
 
-        public virtual void SerializeObject(object state)
+        public override void SerializeObject(object state)
         {
             try
             {
@@ -64,12 +49,5 @@ namespace ParallelSerializer
         protected abstract void Serialize(SmartBinaryWriter bw);
 
         protected abstract void SetupChildTasks();
-
-        protected virtual void AddSubTask(ISerializationTask task)
-        {
-            var child = new TaskTreeNode { Task = task };
-            TaskTreeNode.Children.Add(child);
-            task.TaskTreeNode = child;
-        }
     }
 }

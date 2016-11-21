@@ -150,6 +150,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>PrimitiveSerializationTasks.tt</DependentUpon>
     </Compile>
+    <Compile Include="TaskBase.cs" />
     <Compile Include="TaskTreeNode.cs" />
     <Compile Include="TplScheduler.cs" />
   </ItemGroup>

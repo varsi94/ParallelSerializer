@@ -33,14 +33,14 @@ namespace ParallelSerializer.App
             //    var result = (Category) serializer.Deserialize(ms);
             //}
 
-            //var test = new SerializerTest(obj1, "Lapos objektum");
-            //test.Run();
-            //test.SaveResultsToFile();
+            var test = new SerializerTest(obj1, "Lapos objektum");
+            test.Run();
+            test.SaveResultsToFile();
 
-            var obj2 = GetDeepObject(100);
-            var test2 = new SerializerTest(obj2, "Mély objektum");
-            test2.Run();
-            test2.SaveResultsToFile();
+            //var obj2 = GetDeepObject(100);
+            //var test2 = new SerializerTest(obj2, "Mély objektum");
+            //test2.Run();
+            //test2.SaveResultsToFile();
         }
 
         static Product GetDeepObject(int size)

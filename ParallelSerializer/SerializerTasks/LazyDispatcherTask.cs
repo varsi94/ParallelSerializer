@@ -7,19 +7,13 @@ using System.Threading.Tasks;
 
 namespace ParallelSerializer.SerializerTasks
 {
-    public class LazyDispatcherTask : ISerializationTask
+    public class LazyDispatcherTask : TaskBase<object>, ISerializationTask
     {
         private object syncRoot = new object();
 
-        protected object Object { get; }
-
-        protected SerializationContext SerializationContext { get; }
-
-        protected IScheduler Scheduler { get; }
-
-        public byte[] SerializationResult { get; set; }
-
-        public TaskTreeNode TaskTreeNode { get; set; }
+        public LazyDispatcherTask(object obj, SerializationContext context, IScheduler scheduler) : base(obj, context, scheduler)
+        {
+        }
 
         private void GenerateNewClassTasks()
         {
@@ -33,7 +27,7 @@ namespace ParallelSerializer.SerializerTasks
             }
         }
 
-        public void SerializeObject(object state)
+        public override void SerializeObject(object state)
         {
             try
             {
@@ -42,23 +36,13 @@ namespace ParallelSerializer.SerializerTasks
                     GenerateNewClassTasks();
                 }
                 var dispatcher = SerializerState.DispatcherFactory(Object, SerializationContext, Scheduler);
-                dispatcher.TaskTreeNode = new TaskTreeNode() {Task = dispatcher};
-                TaskTreeNode.Children.Add(dispatcher.TaskTreeNode);
+                AddSubTask(dispatcher);
                 Scheduler.QueueWorkItem(dispatcher);
             }
             finally
             {
                 SerializationContext.StopTask(this);
             }
-        }
-
-        public LazyDispatcherTask(object obj, SerializationContext context, IScheduler scheduler)
-        {
-            Object = obj;
-            SerializationContext = context;
-            Scheduler = scheduler;
-
-            SerializationContext.StartTask(this);
         }
     }
 }
