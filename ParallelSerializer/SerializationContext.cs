@@ -44,43 +44,42 @@ namespace ParallelSerializer
                 throw new InvalidOperationException();
             }
 
-            var result = new byte[TaskTreeRoot.GetLength()];
-            int offset = 0;
-            TaskTreeNode currentNode = TaskTreeRoot;
-            while (currentNode != null)
+            using (var ms = new MemoryStream())
             {
-                if (currentNode.Task.SerializationResult != null && currentNode.Task.SerializationResult.Length != 0)
+                TaskTreeNode currentNode = TaskTreeRoot;
+                while (currentNode != null)
                 {
-                    Buffer.BlockCopy(currentNode.Task.SerializationResult, 0, result, offset,
-                        currentNode.Task.SerializationResult.Length);
-                    offset += currentNode.Task.SerializationResult.Length;
-                }
+                    if (currentNode.Task.SerializationResult != null && currentNode.Task.SerializationResult.Length != 0)
+                    {
+                        ms.Write(currentNode.Task.SerializationResult, 0, currentNode.Task.SerializationResult.Length);
+                    }
 
-                var firstChild = currentNode.Children.FirstOrDefault();
-                if (firstChild != null)
-                {
-                    currentNode = firstChild;
-                    continue;
-                }
+                    var firstChild = currentNode.Children.FirstOrDefault();
+                    if (firstChild != null)
+                    {
+                        currentNode = firstChild;
+                        continue;
+                    }
 
-                if (currentNode.NextSibling != null)
-                {
+                    if (currentNode.NextSibling != null)
+                    {
+                        currentNode = currentNode.NextSibling;
+                        continue;
+                    }
+
+                    while (currentNode != TaskTreeRoot && currentNode.NextSibling == null)
+                    {
+                        currentNode = currentNode.Parent;
+                    }
+
+                    if (currentNode == TaskTreeRoot)
+                    {
+                        break;
+                    }
                     currentNode = currentNode.NextSibling;
-                    continue;
                 }
-
-                while (currentNode != TaskTreeRoot && currentNode.NextSibling == null)
-                {
-                    currentNode = currentNode.Parent;
-                }
-
-                if (currentNode == TaskTreeRoot)
-                {
-                    break;
-                }
-                currentNode = currentNode.NextSibling;
+                return ms.ToArray();
             }
-            return result;
         }
 
         public void Dispose()

@@ -1,5 +1,4 @@
-﻿using DemoModel;
-using DynamicSerializer.Core;
+﻿using DynamicSerializer.Core;
 using DynamicSerializer.Roslyn;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

@@ -155,12 +155,6 @@
     <Compile Include="TplScheduler.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DemoModel\DemoModel.csproj">
-      <Project>{97B2336D-ECD4-4879-A1D5-4C30FC0D9B8D}</Project>
-      <Name>DemoModel</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
