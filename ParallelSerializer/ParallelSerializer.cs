@@ -1,6 +1,7 @@
 ﻿using DynamicSerializer.Core;
 using DynamicSerializer.Roslyn;
 using ParallelSerializer.Generator;
+using ParallelSerializer.Measurement;
 using ParallelSerializer.SerializerTasks;
 using System;
 using System.Collections.Generic;
@@ -26,8 +27,10 @@ namespace ParallelSerializer
             using (var ms = new MemoryStream())
             using (var outputWriter = new SmartBinaryWriter(ms))
             using (var context = new SerializationContext())
+            using (var logger = FileLogger.GetInstance("log.txt"))
             {
                 var task = new DispatcherTask(obj, context, scheduler);
+                context.Logger = logger;
                 context.TaskTreeRoot = new TaskTreeNode()
                 {
                     Task = task
@@ -46,7 +49,7 @@ namespace ParallelSerializer
                 {
                     outputWriter.Write(SerializerState.KnownTypesSerialize.IndexOf(obj.GetType()));
                 }
-                outputWriter.Write(context.GetJoinedResult());
+                MethodStopwatch.MeasureMethodCall("JoinResult: ", context.Logger, () => outputWriter.Write(context.GetJoinedResult()));
                 ms.Position = 0;
                 ms.CopyTo(output);
             }

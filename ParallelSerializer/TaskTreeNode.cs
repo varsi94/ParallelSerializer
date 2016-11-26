@@ -22,15 +22,5 @@ namespace ParallelSerializer
         {
             Children = new List<TaskTreeNode>();
         }
-
-        public int GetLength()
-        {
-            int result = Task.SerializationResult?.Length ?? 0;
-            foreach (var taskTreeNode in Children)
-            {
-                result += taskTreeNode.GetLength();
-            }
-            return result;
-        }
     }
 }

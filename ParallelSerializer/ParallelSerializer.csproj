@@ -135,6 +135,10 @@
     <Compile Include="Generator\TaskGenerator.cs" />
     <Compile Include="IScheduler.cs" />
     <Compile Include="ISerializationTask.cs" />
+    <Compile Include="Measurement\ConsoleLogger.cs" />
+    <Compile Include="Measurement\FileLogger.cs" />
+    <Compile Include="Measurement\ILogger.cs" />
+    <Compile Include="Measurement\MethodStopwatch.cs" />
     <Compile Include="SerializerTasks\LazyDispatcherTask.cs" />
     <Compile Include="ParallelSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

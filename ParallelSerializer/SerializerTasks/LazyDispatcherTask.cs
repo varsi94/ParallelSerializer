@@ -1,4 +1,5 @@
 ﻿using ParallelSerializer.Generator;
+using ParallelSerializer.Measurement;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace ParallelSerializer.SerializerTasks
                 {
                     return;
                 }
-                TaskGenerator.GenerateTasksForClass(Object.GetType());
+                MethodStopwatch.MeasureMethodCall("GenerateTask", SerializationContext.Logger, () => TaskGenerator.GenerateTasksForClass(Object.GetType()));
             }
         }
 

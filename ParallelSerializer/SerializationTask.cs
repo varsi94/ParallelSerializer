@@ -1,6 +1,7 @@
 ﻿using DynamicSerializer.Core;
 using DynamicSerializer.Roslyn;
 using ParallelSerializer.Generator;
+using ParallelSerializer.Measurement;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,28 +23,31 @@ namespace ParallelSerializer
 
         public override void SerializeObject(object state)
         {
-            try
+            MethodStopwatch.MeasureMethodCall("SerializeObject", SerializationContext.Logger, () =>
             {
-                if (Object != null)
+                try
                 {
-                    SetupChildTasks();
-                    foreach (var task in TaskTreeNode.Children.Select(x => x.Task))
+                    if (Object != null)
                     {
-                        Scheduler.QueueWorkItem(task);
+                        SetupChildTasks();
+                        foreach (var task in TaskTreeNode.Children.Select(x => x.Task))
+                        {
+                            Scheduler.QueueWorkItem(task);
+                        }
+                    }
+
+                    using (var ms = new MemoryStream())
+                    using (var bw = new SmartBinaryWriter(ms))
+                    {
+                        MethodStopwatch.MeasureMethodCall("Serialize", SerializationContext.Logger, () => Serialize(bw));
+                        MethodStopwatch.MeasureMethodCall("SerializationResult", SerializationContext.Logger, () => SerializationResult = ms.ToArray());
                     }
                 }
-
-                using (var ms = new MemoryStream())
-                using (var bw = new SmartBinaryWriter(ms))
+                finally
                 {
-                    Serialize(bw);
-                    SerializationResult = ms.ToArray();
+                    SerializationContext.StopTask(this);
                 }
-            }
-            finally
-            {
-                SerializationContext.StopTask(this);
-            }
+            });
         }
 
         protected abstract void Serialize(SmartBinaryWriter bw);

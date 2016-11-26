@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ParallelSerializer.Measurement;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +17,8 @@ namespace ParallelSerializer
         public TaskTreeNode TaskTreeRoot { get; set; }
 
         private Barrier Barrier { get; } = new Barrier();
+
+        public ILogger Logger { get; set; }
 
         public void StartTask(ISerializationTask task)
         {
