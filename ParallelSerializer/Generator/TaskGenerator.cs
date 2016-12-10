@@ -160,6 +160,7 @@ namespace ParallelSerializer.Generator
             if (addedType != null)
             {
                 newTypeLocation.Add(addedType.Assembly.Location);
+                newTypeLocation.AddRange(addedType.GenericTypeArguments.Select(x => x.Assembly.Location));
             }
 
             foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.SelectMany(x => x.Value.GenericTypeArguments.Select(y => y.Assembly.Location).Union(new [] {x.Value.Assembly.Location}))
@@ -339,18 +340,25 @@ namespace ParallelSerializer.Generator
                 SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(ConstantsForGeneration.TaskNamespace));
             nameSpace = nameSpace.AddMembers(classes.ToArray());
             var compUnit = SyntaxFactory.CompilationUnit().AddMembers(nameSpace);
-            var addedTypeLocations = new List<string>();
+            var addedTypeLocations = new List<string>
+            {
+                typeof(object).Namespace,
+                typeof(ISerializationTask).Namespace,
+                typeof(SmartBinaryWriter).Namespace,
+                typeof(TaskGenerator).Namespace,
+                typeof(KeyValuePair<,>).Namespace
+            };
+
             if (addedType != null)
             {
                 addedTypeLocations.Add(addedType.Namespace);
+                addedTypeLocations.AddRange(addedType.GenericTypeArguments.Select(x => x.Namespace));
             }
 
             foreach (var ns in SerializerState.KnownTypesSerialize
-                .SelectMany(x => x.Value.GenericTypeArguments.Select(y => y.Namespace).Union(new[] {x.Value.Namespace})).Union(new[]
-            {
-                typeof(object).Namespace, typeof(ISerializationTask).Namespace, typeof(SmartBinaryWriter).Namespace,
-                typeof(TaskGenerator).Namespace, typeof(KeyValuePair<,>).Namespace
-            }).Union(addedTypeLocations).Distinct())
+                .SelectMany(x => x.Value.GenericTypeArguments.Select(y => y.Namespace).Union(new[] {x.Value.Namespace}))
+                .Union(addedTypeLocations)
+                .Distinct())
             {
                 compUnit = compUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
             }
