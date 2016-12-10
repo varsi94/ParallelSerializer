@@ -30,7 +30,7 @@ namespace ParallelSerializer.App
             //    var serializer = new ParallelSerializer(new TplScheduler());
             //    serializer.Serialize(obj1, ms);
             //    ms.Position = 0;
-            //    var result = (Category) serializer.Deserialize(ms);
+            //    var result = (Category)serializer.Deserialize(ms);
             //}
 
             var test = new SerializerTest(obj1, "Lapos objektum");

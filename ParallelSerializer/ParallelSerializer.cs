@@ -37,16 +37,18 @@ namespace ParallelSerializer
                 context.WaitForAllTasks();
 
                 outputWriter.Write(SerializerState.KnownTypesSerialize.Count - 15);
-                foreach (var newType in SerializerState.KnownTypesSerialize.Skip(15))
+                foreach (var newType in SerializerState.KnownTypesSerialize.OrderBy(x => x.Key).Where(x => x.Key >= 15).Select(x => x.Value))
                 {
                     outputWriter.Write(newType.AssemblyQualifiedName);
                 }
 
                 if (obj != null && (obj.GetType().IsValueType || obj is string))
                 {
-                    outputWriter.Write(SerializerState.KnownTypesSerialize.IndexOf(obj.GetType()));
+                    outputWriter.Write(SerializerState.KnownTypesSerialize.SingleOrDefault(x => x.Value == obj.GetType()).Key);
                 }
-                outputWriter.Write(context.GetJoinedResult());
+
+                var joinedResult = context.GetJoinedResult();
+                outputWriter.Write(joinedResult);
                 ms.Position = 0;
                 ms.CopyTo(output);
             }

@@ -120,11 +120,18 @@ namespace ParallelSerializer.SerializerTasks
 
         protected override void SetupChildTasks()
         {
-			int index = SerializerState.KnownTypesSerialize.IndexOf(Object.GetType());
-			if (index == -1 || index >= 15) 
-			{
-				AddSubTask(new LazyDispatcherTask(Object, SerializationContext, Scheduler));
-			}
+            try
+            {
+                int index = SerializerState.KnownTypesSerialize.Single(x => x.Value == Object.GetType()).Key;
+                if (index == -1 || index >= 15)
+                {
+                    AddSubTask(new LazyDispatcherTask(Object, SerializationContext, Scheduler));
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                AddSubTask(new LazyDispatcherTask(Object, SerializationContext, Scheduler));
+            }
         }
     }
 }

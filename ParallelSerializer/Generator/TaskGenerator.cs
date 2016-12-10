@@ -117,8 +117,7 @@ namespace ParallelSerializer.Generator
 
         internal static void GenerateTasksForClass(Type type)
         {
-            SerializerState.KnownTypesSerialize.Add(type);
-            int typeId = SerializerState.KnownTypesSerialize.IndexOf(type);
+            int typeId = Interlocked.Increment(ref SerializerState.TypeCount);
             List<ClassDeclarationSyntax> classes = null;
             if (type.IsGenericCollection())
             {
@@ -129,7 +128,7 @@ namespace ParallelSerializer.Generator
                 classes = SerializeNonCollection(type, typeId);
             }
 
-            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes);
+            CompilationUnitSyntax compUnit = CreateCompilationUnitFromClasses(classes, type);
             var dispatcher =
                 SerializerState.Compilation.SyntaxTrees.SingleOrDefault(
                     x =>
@@ -144,16 +143,28 @@ namespace ParallelSerializer.Generator
             }
 
             SerializerState.Compilation =
-                SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher().SyntaxTree);
+                SerializerState.Compilation.AddSyntaxTrees(DispatcherGenerator.GenerateDispatcher(type).SyntaxTree);
             SerializerState.Compilation = SerializerState.Compilation.AddSyntaxTrees(compUnit.SyntaxTree);
-            RefreshReferences();
+            RefreshReferences(type);
             Emit();
+
+            if (!SerializerState.KnownTypesSerialize.TryAdd(typeId, type))
+            {
+                throw new InvalidOperationException();
+            }
         }
 
-        internal static void RefreshReferences()
+        internal static void RefreshReferences(Type addedType = null)
         {
-            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.SelectMany(x => x.GenericTypeArguments.Select(y => y.Assembly.Location).Union(new [] {x.Assembly.Location}))
-                .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location }).Distinct())
+            List<string> newTypeLocation = new List<string>();
+            if (addedType != null)
+            {
+                newTypeLocation.Add(addedType.Assembly.Location);
+            }
+
+            foreach (var assemblyLocation in SerializerState.KnownTypesSerialize.SelectMany(x => x.Value.GenericTypeArguments.Select(y => y.Assembly.Location).Union(new [] {x.Value.Assembly.Location}))
+                .Union(new[] { typeof(object).Assembly.Location, typeof(TaskGenerator).Assembly.Location, typeof(SmartBinaryWriter).Assembly.Location })
+                .Union(newTypeLocation).Distinct())
             {
                 if (!SerializerState.References.Contains(assemblyLocation))
                 {
@@ -322,18 +333,24 @@ namespace ParallelSerializer.Generator
             }
         }
 
-        internal static CompilationUnitSyntax CreateCompilationUnitFromClasses(IEnumerable<ClassDeclarationSyntax> classes)
+        internal static CompilationUnitSyntax CreateCompilationUnitFromClasses(IEnumerable<ClassDeclarationSyntax> classes, Type addedType = null)
         {
             var nameSpace =
                 SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(ConstantsForGeneration.TaskNamespace));
             nameSpace = nameSpace.AddMembers(classes.ToArray());
             var compUnit = SyntaxFactory.CompilationUnit().AddMembers(nameSpace);
+            var addedTypeLocations = new List<string>();
+            if (addedType != null)
+            {
+                addedTypeLocations.Add(addedType.Namespace);
+            }
+
             foreach (var ns in SerializerState.KnownTypesSerialize
-                .SelectMany(x => x.GenericTypeArguments.Select(y => y.Namespace).Union(new[] {x.Namespace})).Union(new[]
+                .SelectMany(x => x.Value.GenericTypeArguments.Select(y => y.Namespace).Union(new[] {x.Value.Namespace})).Union(new[]
             {
                 typeof(object).Namespace, typeof(ISerializationTask).Namespace, typeof(SmartBinaryWriter).Namespace,
                 typeof(TaskGenerator).Namespace, typeof(KeyValuePair<,>).Namespace
-            }).Distinct())
+            }).Union(addedTypeLocations).Distinct())
             {
                 compUnit = compUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)));
             }

@@ -44,14 +44,15 @@ namespace ParallelSerializer.Generator
             return taskClass.ReplaceNode(serializeMethod, newSerializerMethod);
         }
 
-        internal static CompilationUnitSyntax GenerateDispatcher()
+        internal static CompilationUnitSyntax GenerateDispatcher(Type newType = null)
         {
             var dispatcher = typeof(object).GetSerializerTask(ConstantsForGeneration.DispatcherClassName);
             dispatcher = AddNullChecking(dispatcher);
             var serializeMethod = dispatcher.GetSerializerMethod();
             var setupMethod = dispatcher.GetSetupChildTasksMethod();
+            var newTypeArr = newType == null ? new Type[0] : new Type[] {newType};
 
-            foreach (var type in SerializerState.KnownTypesSerialize.Where(x => !x.IsAtomic()))
+            foreach (var type in SerializerState.KnownTypesSerialize.Where(x => !x.Value.IsAtomic()).Select(x => x.Value).Union(newTypeArr))
             {
                 var argument = SyntaxFactory.Argument(SyntaxFactory.CastExpression(
                     SyntaxFactory.ParseTypeName(type.GetFullCorrectTypeName()),
@@ -126,7 +127,7 @@ namespace ParallelSerializer.Generator
                                                         SyntaxFactory.Parameter(
                                                             SyntaxFactory.Identifier("s"))
                                                     })))))))));
-            return TaskGenerator.CreateCompilationUnitFromClasses(new[] { dispatcher });
+            return TaskGenerator.CreateCompilationUnitFromClasses(new[] { dispatcher }, newType);
         }
 
         internal static void Initialize()

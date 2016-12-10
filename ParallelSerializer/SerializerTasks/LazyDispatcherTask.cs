@@ -17,13 +17,19 @@ namespace ParallelSerializer.SerializerTasks
 
         private void GenerateNewClassTasks()
         {
+            var type = Object.GetType();
+            if (SerializerState.KnownTypesSerialize.Any(x => x.Value == type))
+            {
+                return;
+            }
+
             lock (TaskGenerator.TaskGenerationSyncRoot)
             {
-                if (SerializerState.KnownTypesSerialize.Contains(Object.GetType()))
+                if (SerializerState.KnownTypesSerialize.Any(x => x.Value == type))
                 {
                     return;
                 }
-                TaskGenerator.GenerateTasksForClass(Object.GetType());
+                TaskGenerator.GenerateTasksForClass(type);
             }
         }
 
